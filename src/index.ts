@@ -57,14 +57,24 @@ export default class PodNotify {
 		Brand: string;
 		Version: string;
 		model: string;
-		SDKType: 2;
 	};
 	_uniqueInfoString: string;
 
 	constructor(config?: PodNotifyConfig) {
-		axios.get('https://geoip-db.com/json/').then((res) => {
-			this._uniqueInfo.lat = res.data.latitude;
-			this._uniqueInfo.lng = res.data.longitude;
+		axios.get('https://geoip-db.com/json/').then((res: {
+			data: {
+				country_code?: string;
+				country_name?: string;
+				city?: string;
+				postal?: string;
+				latitude?: number;
+				longitude?: number;
+				IPv4?: string;
+				state: string;
+			}
+		}) => {
+			this._uniqueInfo.lat = res.data.latitude || null;
+			this._uniqueInfo.lng = res.data.longitude || null;
 			this._uniqueInfoString = JSON.stringify(this._uniqueInfo);
 		})
 		// @ts-ignore
@@ -96,8 +106,7 @@ export default class PodNotify {
 			OS: this.ClientUniques.os || '',
 			Brand: this.ClientUniques.deviceVendor || '',
 			Version: this.ClientUniques.osVersion || '',
-			model: this.ClientUniques.deviceName || '',
-			SDKType: 2
+			model: this.ClientUniques.deviceName || ''
 		}
 		this._uniqueInfoString = JSON.stringify(this._uniqueInfo);
 		this._async = new Async({
@@ -134,6 +143,7 @@ export default class PodNotify {
 					  appId: this._appId,
 					  deviceId: this.ClientUniques.deviceId,
 					  token: this.Config.token,
+					  sdkType: 'WEB',
 					  info: this._uniqueInfoString
 					})
 				  })
@@ -162,6 +172,7 @@ export default class PodNotify {
 								appId: this._appId,
 								deviceId: this.ClientUniques.deviceId,
 								token: this.Config.token,
+								sdkType: 'WEB',
 								info: this._uniqueInfoString
 							  })
 							})
