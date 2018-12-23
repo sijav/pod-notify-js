@@ -1,0 +1,21 @@
+{
+  "name": "pod-notify-js",
+  "description": "A compact, cross-browser solution for the Javascript Notifications API using Fanap's POD Async service (DIRANA)",
+  "main": "bin/pod-notify.min.js",
+  "authors": [
+    "Sina Javaheri (sijav) <sinajavaheri@gmail.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/sijav/pod-notify-js",
+  "ignore": [
+    "**/.*",
+    "coverage",
+    "node_modules",
+    "bower_components",
+    "tests",
+    "src",
+    "build",
+    "*.lock",
+    "*.json"
+  ]
+}
