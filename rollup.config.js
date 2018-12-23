@@ -6,6 +6,7 @@ import commonjs from 'rollup-plugin-commonjs';
 import json from 'rollup-plugin-json';
 import { uglify } from 'rollup-plugin-uglify';
 import { minify } from 'uglify-es';
+import path from 'path';
 
 const license = `/**
  * Pod Notify JS v0.0.1
@@ -49,11 +50,10 @@ export default [
 			file: 'bin/pod-notify.js'
 		},
 		plugins: [
-			resolve({ extensions: ['.js', '.ts'], preferBuiltins: true }),
-			builtins(),
+			babel({ exclude: ['node_modules/**'] }),
+			resolve({ browser: true }),
 			typescript(),
 			commonjs(),
-			babel({ exclude: 'node_modules/**' }),
 			json()
 		]
 	},
@@ -64,14 +64,14 @@ export default [
 			format: 'umd',
 			name: 'PodNotify',
 			sourcemap: true,
-			file: 'bin/pod-notify.min.js'
+			file: 'bin/pod-notify.min.js',
+			external: ['WebSocket']
 		},
 		plugins: [
-			resolve({ extensions: ['.js', '.ts'], preferBuiltins: true }),
-			builtins(),
+			babel({ exclude: 'node_modules/**' }),
+			resolve({ browser: true }),
 			typescript(),
 			commonjs(),
-			babel({ exclude: 'node_modules/**' }),
 			json(),
 			uglify(
 				{
