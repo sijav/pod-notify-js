@@ -1,6 +1,7 @@
 {
 	"compilerOptions": {
 		"lib": ["esnext", "dom", "webworker"],
+		"module": "esnext",
 		// Target latest version of ECMAScript.
 		"target": "es5",
 		// Search under node_modules for non-relative imports.
@@ -16,7 +17,9 @@
 		// Import non-ES modules as default imports.
 		"esModuleInterop": true,
 		// Do NOT type check under node_modules.
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"outDir": "./bin/"
 	},
 	"include": ["src"]
 }

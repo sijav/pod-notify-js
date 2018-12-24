@@ -1,10 +1,12 @@
 import { Notify } from './notify';
-import { Global, PodNotifyConfig, ClientUniques, PodEventType } from './types';
-import ClientJS from 'clientjs';
+import { Global, PodNotifyConfig, ClientUniques, PodEventType, DeviceUUIDParsed } from './types';
 import generateUUID from './utility/GenerateUUID';
 // @ts-ignore
 import Async from 'podasync';
 import axios from 'axios';
+// @ts-ignore
+import { DeviceUUID } from 'device-uuid';
+import UAParser from 'ua-parser-js';
 
 const PodEventTypes : {
 	CONNECT: "connect";
@@ -61,22 +63,7 @@ export default class PodNotify {
 	_uniqueInfoString: string;
 
 	constructor(config?: PodNotifyConfig) {
-		axios.get('https://geoip-db.com/json/').then((res: {
-			data: {
-				country_code?: string;
-				country_name?: string;
-				city?: string;
-				postal?: string;
-				latitude?: number;
-				longitude?: number;
-				IPv4?: string;
-				state: string;
-			}
-		}) => {
-			this._uniqueInfo.lat = res.data.latitude || null;
-			this._uniqueInfo.lng = res.data.longitude || null;
-			this._uniqueInfoString = JSON.stringify(this._uniqueInfo);
-		})
+		this._getLatLng();
 		// @ts-ignore
 		this.Notify = new Notify(typeof window !== 'undefined' ? window as Global : global as Global);
 		this.Config = config || {
@@ -84,21 +71,27 @@ export default class PodNotify {
 			token: '2233',
 			serverName: 'mnot'
 		};
-		const client = new ClientJS();
 		this._appId = localStorage.getItem('appId') || new Date().getTime().toString();
-		this._deviceFingerPrint = localStorage.getItem('deviceId') || client.getFingerprint().toString();
+		const deviceUUID = new DeviceUUID();
+		const uuid: string = deviceUUID.get();
+		const parsedDevice: DeviceUUIDParsed = deviceUUID.parse();
+		const parser = new UAParser();
+		const browser = parser.getBrowser();
+		const device = parser.getDevice();
+		const os = parser.getOS();
+		this._deviceFingerPrint = localStorage.getItem('deviceId') || uuid;
+		localStorage.setItem('deviceId', this._deviceFingerPrint);
 		this.ClientUniques = {
-			browser: client.getBrowser(),
-			browserMajorVersion: client.getBrowserMajorVersion(),
-			browserVersion: client.getBrowserVersion(),
-			currentResolution: client.getCurrentResolution(),
+			browser: browser.name || '',
+			browserMajorVersion: browser.major || '',
+			browserVersion: browser.version || '',
+			currentResolution: (parsedDevice.resolution || []).join('x'),
 			deviceId: this._deviceFingerPrint,
-			deviceName: client.getDevice(),
-			deviceType: client.getDeviceType(),
-			deviceVendor: client.getDeviceVendor(),
-			hasLocalStorage: client.isLocalStorage(),
-			os: client.getOS(),
-			osVersion: client.getOSVersion()
+			deviceName: device.model || '',
+			deviceType: device.type || '',
+			deviceVendor: device.vendor || '',
+			os: os.name || '',
+			osVersion: os.version || ''
 		};
 		this._uniqueInfo = {
 			lat: null,
@@ -128,6 +121,7 @@ export default class PodNotify {
 			this._fireEvent(PodEventTypes.ERROR, param, ack);
 		});
 		this._async.on(PodEventTypes.ASYNC_READY, (param: any, ack?: any) => {
+			this._peerId = this._peerId || this._async.getPeerId();
 			this._async.send({
 				type: 4,
 				content: {
@@ -192,6 +186,25 @@ export default class PodNotify {
 		this._async.on(PodEventTypes.STATE_CHANGE, (param: any, ack?: any) => {
 			this._fireEvent(PodEventTypes.STATE_CHANGE, param, ack);
 		});
+	}
+
+	_getLatLng = () => {
+		axios.get('https://geoip-db.com/json/').then((res: {
+			data: {
+				country_code?: string;
+				country_name?: string;
+				city?: string;
+				postal?: string;
+				latitude?: number;
+				longitude?: number;
+				IPv4?: string;
+				state: string;
+			}
+		}) => {
+			this._uniqueInfo.lat = res.data.latitude || null;
+			this._uniqueInfo.lng = res.data.longitude || null;
+			this._uniqueInfoString = JSON.stringify(this._uniqueInfo);
+		}).catch(() => {this._getLatLng});
 	}
 
 	_fireEvent = (eventName: PodEventType, param: any, ack?: any) => {

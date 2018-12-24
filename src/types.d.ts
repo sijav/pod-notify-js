@@ -84,9 +84,32 @@ declare interface ClientUniques {
 	deviceType: string;
 	deviceVendor: string;
 	currentResolution: string;
-	hasLocalStorage: boolean;
 }
 
 declare type PodEventType = "connect" | "disconnect" | "reconnect" | "message" | "asyncReady" | "stateChange" | "error";
 
-export { NotificationType, GenericNotification, Global, NotifyOptions, PushParams, PluginManifest, PushPermission, PodNotifyConfig, ClientUniques, PodEventType }
+declare interface DeviceUUIDParsed {
+	language?: string;
+	platform?: string;
+	os?: string;
+	cpuCores?: number;
+	silkAccelerated?: boolean;
+	isAuthoritative?: boolean;
+	isKindleFire?: boolean;
+	isDesktop?: boolean;
+	isMobile?: boolean;
+	isTablet?: boolean;
+	isWindows?: boolean;
+	isLinux?: boolean;
+	isLinux64?: boolean;
+	isMac?: boolean;
+	isiPad?: boolean;
+	isiPhone?: boolean;
+	isiPod?: boolean;
+	isSmartTV?: boolean;
+	pixelDepth?: string;
+	isTouchScree?: boolean;
+	resolution?: number[];
+}
+
+export { NotificationType, GenericNotification, Global, NotifyOptions, PushParams, PluginManifest, PushPermission, PodNotifyConfig, ClientUniques, PodEventType, DeviceUUIDParsed }
