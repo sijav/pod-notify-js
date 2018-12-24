@@ -6,7 +6,7 @@
 	"scripts": {
 		"clean": "rimraf bin/",
 		"build": "webpack --mode production",
-		"prepublish": "npm run build",
+		"prepare": "npm run build",
 		"precommit": "npm run check-types && lint-staged && npm run build && git add ./bin",
 		"check-types": "tsc"
 	},
