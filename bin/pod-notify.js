@@ -3887,6 +3887,8 @@ var PodNotify = function PodNotify(config) {
 
   _defineProperty(this, "_uniqueInfoString", void 0);
 
+  _defineProperty(this, "_notificationStack", []);
+
   _defineProperty(this, "_getLatLng", function () {
     axios__WEBPACK_IMPORTED_MODULE_3___default.a.get('https://geoip-db.com/json/').then(function (res) {
       _this._uniqueInfo.lat = res.data.latitude || null;
@@ -3913,6 +3915,27 @@ var PodNotify = function PodNotify(config) {
         errorCode: 999,
         errorMessage: "Unknown ERROR!",
         errorEvent: e
+      });
+    }
+  });
+
+  _defineProperty(this, "_sendNotif", function (notif) {
+    if (notif) {
+      _this._notificationStack.push(notif);
+    }
+
+    if (_this.Notify.Permission.has()) {
+      _this._notificationStack.forEach(function (item) {
+        _this.Notify.create(item.title, {
+          body: item.text,
+          title: item.title
+        });
+      });
+
+      _this._notificationStack = [];
+    } else {
+      _this.Notify.Permission.request(function () {
+        _this._sendNotif();
       });
     }
   });
@@ -4051,8 +4074,8 @@ var PodNotify = function PodNotify(config) {
           });
 
           if (_this.Config.handlePushNotification) {
-            _this.Notify.create(contentChild.title, {
-              body: contentChild.text,
+            _this._sendNotif({
+              text: contentChild.text,
               title: contentChild.title
             });
           }
