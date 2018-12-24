@@ -1,5 +1,5 @@
 import { Notify } from './notify';
-import { Global, PodNotifyConfig, ClientUniques, PodEventType, DeviceUUIDParsed } from './types';
+import { Global, PodNotifyConfig, ClientUniques, PodEventType, DeviceUUIDParsed, NotificationToSend } from './types';
 import generateUUID from './utility/GenerateUUID';
 // @ts-ignore
 import Async from 'podasync';
@@ -61,6 +61,7 @@ export default class PodNotify {
 		model: string;
 	};
 	_uniqueInfoString: string;
+	_notificationStack: NotificationToSend[] = [];
 
 	constructor(config?: PodNotifyConfig) {
 		this._getLatLng();
@@ -173,8 +174,8 @@ export default class PodNotify {
 						  }
 						});
 						if (this.Config.handlePushNotification) {
-							this.Notify.create(contentChild.title, {
-								body: contentChild.text,
+							this._sendNotif({
+								text: contentChild.text,
 								title: contentChild.title
 							});
 						}
@@ -224,6 +225,26 @@ export default class PodNotify {
 			});
 		}
 	};
+
+	_sendNotif = (notif?: NotificationToSend) => {
+		if(notif) {
+			this._notificationStack.push(notif);
+		}
+		if(this.Notify.Permission.has()) {
+			this._notificationStack.forEach((item) => {
+				this.Notify.create(item.title, {
+					body: item.text,
+					title: item.title
+				});
+			});
+			this._notificationStack = [];
+		} else {
+			this.Notify.Permission.request(() => {
+					this._sendNotif();
+				}
+			)
+		}
+	}
 
 	on = (eventName: PodEventType, callback: Function) => {
 		if (this._eventCallbacks[eventName]) {

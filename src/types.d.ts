@@ -112,4 +112,9 @@ declare interface DeviceUUIDParsed {
 	resolution?: number[];
 }
 
-export { NotificationType, GenericNotification, Global, NotifyOptions, PushParams, PluginManifest, PushPermission, PodNotifyConfig, ClientUniques, PodEventType, DeviceUUIDParsed }
+declare interface NotificationToSend {
+	title: string;
+	text: string;
+}
+
+export { NotificationType, GenericNotification, Global, NotifyOptions, PushParams, PluginManifest, PushPermission, PodNotifyConfig, ClientUniques, PodEventType, DeviceUUIDParsed, NotificationToSend }
