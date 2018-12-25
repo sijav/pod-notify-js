@@ -3925,8 +3925,6 @@ var PodNotify = function PodNotify(config) {
     }
 
     if (_this.Notify.Permission.has()) {
-      console.log('stack', _this._notificationStack);
-
       _this._notificationStack.forEach(function (item) {
         _this.Notify.create(item.title, {
           body: item.text,
@@ -3936,8 +3934,6 @@ var PodNotify = function PodNotify(config) {
 
       _this._notificationStack = [];
     } else {
-      console.log('rejected', _this._notificationStack.length);
-
       _this.Notify.Permission.request(function () {
         _this._sendNotif();
       }, function () {});
