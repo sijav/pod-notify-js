@@ -240,9 +240,8 @@ export default class PodNotify {
 			this._notificationStack = [];
 		} else {
 			this.Notify.Permission.request(() => {
-					this._sendNotif();
-				}
-			)
+				this._sendNotif();
+			}, () => {});
 		}
 	}
 
