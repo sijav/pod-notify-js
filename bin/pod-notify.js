@@ -3863,6 +3863,8 @@ var PodNotify = function PodNotify(config) {
 
   _defineProperty(this, "ClientUniques", void 0);
 
+  _defineProperty(this, "ServiceWorkerSubscription", void 0);
+
   _defineProperty(this, "_eventCallbacks", {
     connect: {},
     disconnect: {},
@@ -3888,6 +3890,175 @@ var PodNotify = function PodNotify(config) {
   _defineProperty(this, "_uniqueInfoString", void 0);
 
   _defineProperty(this, "_notificationStack", []);
+
+  _defineProperty(this, "_asyncInitialize", function () {
+    _this._async = new podasync__WEBPACK_IMPORTED_MODULE_2___default.a(_objectSpread({}, _this.Config, {
+      appId: _this._appId,
+      deviceId: _this._deviceFingerPrint
+    }));
+
+    _this._async.on(PodEventTypes.CONNECT, function (peerId) {
+      _this._peerId = peerId;
+      _this._connected = true;
+
+      _this._fireEvent(PodEventTypes.CONNECT, _this._peerId);
+    });
+
+    _this._async.on(PodEventTypes.DISCONNECT, function (param, ack) {
+      _this._peerId = undefined;
+      _this._connected = false;
+
+      _this._fireEvent(PodEventTypes.DISCONNECT, param, ack);
+    });
+
+    _this._async.on(PodEventTypes.ERROR, function (param, ack) {
+      _this._fireEvent(PodEventTypes.ERROR, param, ack);
+    });
+
+    _this._async.on(PodEventTypes.ASYNC_READY, function (param, ack) {
+      _this._peerId = _this._peerId || _this._async.getPeerId();
+
+      _this._async.send({
+        type: 4,
+        content: {
+          peerName: _this.Config.serverName,
+          content: JSON.stringify({
+            serviceName: "SetStatusPush",
+            messageType: 547,
+            content: JSON.stringify({
+              type: 10,
+              messageId: null,
+              senderId: null,
+              receiverId: _this._peerId,
+              appId: _this._appId,
+              deviceId: _this.ClientUniques.deviceId,
+              token: _this.Config.token,
+              sdkType: 'WEB',
+              info: _this._uniqueInfoString
+            })
+          })
+        }
+      });
+
+      _this._fireEvent(PodEventTypes.ASYNC_READY, param, ack);
+    });
+
+    _this._async.on(PodEventTypes.MESSAGE, function (param, ack) {
+      try {
+        var content = JSON.parse(param.content);
+
+        if (content.messageType === 545) {
+          var contentChild = JSON.parse(content.content);
+
+          if (contentChild.messageId && contentChild.senderId) {
+            _this._async.send({
+              type: 4,
+              content: {
+                peerName: "mnot",
+                content: JSON.stringify({
+                  serviceName: "SetStatusPush",
+                  messageType: 547,
+                  content: JSON.stringify({
+                    type: 11,
+                    messageId: contentChild.messageId,
+                    senderId: contentChild.senderId,
+                    receiverId: _this._peerId,
+                    appId: _this._appId,
+                    deviceId: _this.ClientUniques.deviceId,
+                    token: _this.Config.token,
+                    sdkType: 'WEB',
+                    info: _this._uniqueInfoString
+                  })
+                })
+              }
+            });
+
+            if (_this.Config.handlePushNotification) {
+              _this._sendNotif({
+                text: contentChild.text,
+                title: contentChild.title,
+                onClose: function onClose() {
+                  _this._async.send({
+                    type: 4,
+                    content: {
+                      peerName: "mnot",
+                      content: JSON.stringify({
+                        serviceName: "SetStatusPush",
+                        messageType: 547,
+                        content: JSON.stringify({
+                          type: 13,
+                          messageId: contentChild.messageId,
+                          senderId: contentChild.senderId,
+                          receiverId: _this._peerId,
+                          appId: _this._appId,
+                          deviceId: _this.ClientUniques.deviceId,
+                          token: _this.Config.token,
+                          sdkType: 'WEB',
+                          info: _this._uniqueInfoString
+                        })
+                      })
+                    }
+                  });
+                },
+                onOpen: function onOpen() {
+                  _this._async.send({
+                    type: 4,
+                    content: {
+                      peerName: "mnot",
+                      content: JSON.stringify({
+                        serviceName: "SetStatusPush",
+                        messageType: 547,
+                        content: JSON.stringify({
+                          type: 12,
+                          messageId: contentChild.messageId,
+                          senderId: contentChild.senderId,
+                          receiverId: _this._peerId,
+                          appId: _this._appId,
+                          deviceId: _this.ClientUniques.deviceId,
+                          token: _this.Config.token,
+                          sdkType: 'WEB',
+                          info: _this._uniqueInfoString
+                        })
+                      })
+                    }
+                  });
+                },
+                onShow: function onShow() {
+                  _this._async.send({
+                    type: 4,
+                    content: {
+                      peerName: "mnot",
+                      content: JSON.stringify({
+                        serviceName: "SetStatusPush",
+                        messageType: 547,
+                        content: JSON.stringify({
+                          type: 12,
+                          messageId: contentChild.messageId,
+                          senderId: contentChild.senderId,
+                          receiverId: _this._peerId,
+                          appId: _this._appId,
+                          deviceId: _this.ClientUniques.deviceId,
+                          token: _this.Config.token,
+                          sdkType: 'WEB',
+                          info: _this._uniqueInfoString
+                        })
+                      })
+                    }
+                  });
+                }
+              });
+            }
+          }
+        }
+      } catch (_) {}
+
+      _this._fireEvent(PodEventTypes.MESSAGE, param, ack);
+    });
+
+    _this._async.on(PodEventTypes.STATE_CHANGE, function (param, ack) {
+      _this._fireEvent(PodEventTypes.STATE_CHANGE, param, ack);
+    });
+  });
 
   _defineProperty(this, "_getLatLng", function () {
     axios__WEBPACK_IMPORTED_MODULE_3___default.a.get('https://geoip-db.com/json/').then(function (res) {
@@ -3928,7 +4099,17 @@ var PodNotify = function PodNotify(config) {
       _this._notificationStack.forEach(function (item) {
         _this.Notify.create(item.title, {
           body: item.text,
-          title: item.title
+          title: item.title,
+          vibrate: [100, 50, 100],
+          data: {
+            dateOfArrival: Date.now()
+          },
+          requireInteraction: true
+        }).then(function (notifRes) {
+          var notification = notifRes.get();
+          notification.onclick = notif.onOpen;
+          notification.onclose = notif.onClose;
+          notification.onshow = notif.onShow;
         });
       });
 
@@ -3992,103 +4173,16 @@ var PodNotify = function PodNotify(config) {
     model: this.ClientUniques.deviceName || ''
   };
   this._uniqueInfoString = JSON.stringify(this._uniqueInfo);
-  this._async = new podasync__WEBPACK_IMPORTED_MODULE_2___default.a(_objectSpread({}, this.Config, {
-    appId: this._appId,
-    deviceId: this._deviceFingerPrint
-  }));
 
-  this._async.on(PodEventTypes.CONNECT, function (peerId) {
-    _this._peerId = peerId;
-    _this._connected = true;
+  if (this.Config.serviceWorker) {
+    this.Notify.config({
+      serviceWorker: this.Config.serviceWorker,
+      fallback: function fallback() {} // TODO: Change this fallback to support push on low end browsers
 
-    _this._fireEvent(PodEventTypes.CONNECT, _this._peerId);
-  });
-
-  this._async.on(PodEventTypes.DISCONNECT, function (param, ack) {
-    _this._peerId = undefined;
-    _this._connected = false;
-
-    _this._fireEvent(PodEventTypes.DISCONNECT, param, ack);
-  });
-
-  this._async.on(PodEventTypes.ERROR, function (param, ack) {
-    _this._fireEvent(PodEventTypes.ERROR, param, ack);
-  });
-
-  this._async.on(PodEventTypes.ASYNC_READY, function (param, ack) {
-    _this._peerId = _this._peerId || _this._async.getPeerId();
-
-    _this._async.send({
-      type: 4,
-      content: {
-        peerName: _this.Config.serverName,
-        content: JSON.stringify({
-          serviceName: "SetStatusPush",
-          messageType: 547,
-          content: JSON.stringify({
-            type: 0,
-            messageId: null,
-            senderId: null,
-            receiverId: _this._peerId,
-            appId: _this._appId,
-            deviceId: _this.ClientUniques.deviceId,
-            token: _this.Config.token,
-            sdkType: 'WEB',
-            info: _this._uniqueInfoString
-          })
-        })
-      }
     });
+  }
 
-    _this._fireEvent(PodEventTypes.ASYNC_READY, param, ack);
-  });
-
-  this._async.on(PodEventTypes.MESSAGE, function (param, ack) {
-    try {
-      var content = JSON.parse(param.content);
-
-      if (content.messageType === 545) {
-        var contentChild = JSON.parse(content.content);
-
-        if (contentChild.messageId && contentChild.senderId) {
-          _this._async.send({
-            type: 4,
-            content: {
-              peerName: "mnot",
-              content: JSON.stringify({
-                serviceName: "SetStatusPush",
-                messageType: 547,
-                content: JSON.stringify({
-                  type: 1,
-                  messageId: contentChild.messageId,
-                  senderId: contentChild.senderId,
-                  receiverId: _this._peerId,
-                  appId: _this._appId,
-                  deviceId: _this.ClientUniques.deviceId,
-                  token: _this.Config.token,
-                  sdkType: 'WEB',
-                  info: _this._uniqueInfoString
-                })
-              })
-            }
-          });
-
-          if (_this.Config.handlePushNotification) {
-            _this._sendNotif({
-              text: contentChild.text,
-              title: contentChild.title
-            });
-          }
-        }
-      }
-    } catch (_) {}
-
-    _this._fireEvent(PodEventTypes.MESSAGE, param, ack);
-  });
-
-  this._async.on(PodEventTypes.STATE_CHANGE, function (param, ack) {
-    _this._fireEvent(PodEventTypes.STATE_CHANGE, param, ack);
-  });
+  this._asyncInitialize();
 };
 
 

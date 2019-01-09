@@ -71,6 +71,7 @@ declare interface PodNotifyConfig {
 		onMessageSend?: boolean;
 		workerId?: number;
 	};
+	serviceWorker?: string;
 }
 
 declare interface ClientUniques {
@@ -115,6 +116,9 @@ declare interface DeviceUUIDParsed {
 declare interface NotificationToSend {
 	title: string;
 	text: string;
+	onClose: (e) => void;
+	onOpen: (e) => void;
+	onShow: (e) => void;
 }
 
 export { NotificationType, GenericNotification, Global, NotifyOptions, PushParams, PluginManifest, PushPermission, PodNotifyConfig, ClientUniques, PodEventType, DeviceUUIDParsed, NotificationToSend }
