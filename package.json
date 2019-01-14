@@ -1,6 +1,6 @@
 {
 	"name": "pod-notify-js",
-	"version": "0.0.6",
+	"version": "0.0.9",
 	"description": "A cross-browser solution for the Javascript Notifications API using Fanap's POD Async service (DIRANA)",
 	"main": "bin/pod-notify.min.js",
 	"scripts": {

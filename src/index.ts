@@ -73,7 +73,8 @@ export default class PodNotify {
 			token: '2233',
 			serverName: 'mnot'
 		};
-		this._appId = localStorage.getItem('appId') || new Date().getTime().toString();
+		this._appId = this.Config.appId || localStorage.getItem('appId') || new Date().getTime().toString();
+		localStorage.setItem('appId', this._appId);
 		const deviceUUID = new DeviceUUID();
 		const uuid: string = deviceUUID.get();
 		const parsedDevice: DeviceUUIDParsed = deviceUUID.parse();
@@ -163,27 +164,6 @@ export default class PodNotify {
 				if (content.messageType === 545) {
 					const contentChild = JSON.parse(content.content);
 					if (contentChild.messageId && contentChild.senderId) {
-						this._async.send({
-							type: 4,
-							content: {
-								peerName: "mnot",
-								content: JSON.stringify({
-									serviceName: "SetStatusPush",
-									messageType: 547,
-									content: JSON.stringify({
-										type: 11,
-										messageId: contentChild.messageId,
-										senderId: contentChild.senderId,
-										receiverId: this._peerId,
-										appId: this._appId,
-										deviceId: this.ClientUniques.deviceId,
-										token: this.Config.token,
-										sdkType: 'WEB',
-										info: this._uniqueInfoString
-									})
-								})
-							}
-						});
 						if (this.Config.handlePushNotification) {
 							this._sendNotif({
 								text: contentChild.text,
@@ -210,8 +190,8 @@ export default class PodNotify {
 											})
 										}
 									});
-								},
-								onOpen: () => {
+								},/*
+								onError: () => {
 									this._async.send({
 										type: 4,
 										content: {
@@ -220,7 +200,30 @@ export default class PodNotify {
 												serviceName: "SetStatusPush",
 												messageType: 547,
 												content: JSON.stringify({
-													type: 12,
+													type: 13,
+													messageId: contentChild.messageId,
+													senderId: contentChild.senderId,
+													receiverId: this._peerId,
+													appId: this._appId,
+													deviceId: this.ClientUniques.deviceId,
+													token: this.Config.token,
+													sdkType: 'WEB',
+													info: this._uniqueInfoString
+												})
+											})
+										}
+									});
+								},*/
+								onShow: () => {
+									this._async.send({
+										type: 4,
+										content: {
+											peerName: "mnot",
+											content: JSON.stringify({
+												serviceName: "SetStatusPush",
+												messageType: 547,
+												content: JSON.stringify({
+													type: 11,
 													messageId: contentChild.messageId,
 													senderId: contentChild.senderId,
 													receiverId: this._peerId,
@@ -234,7 +237,7 @@ export default class PodNotify {
 										}
 									});
 								},
-								onShow: () => {
+								onClick: () => {
 									this._async.send({
 										type: 4,
 										content: {
@@ -312,19 +315,18 @@ export default class PodNotify {
 		}
 		if(this.Notify.Permission.has()) {
 			this._notificationStack.forEach((item) => {
-				this.Notify.create(item.title, {
-					body: item.text,
-					title: item.title,
+				this.Notify.create(item.title || '', {
+					body: item.text || '',
+					title: item.title || '',
 					vibrate: [100, 50, 100],
 					data: {
 						dateOfArrival: Date.now()
 					},
-					requireInteraction: true
-				}).then((notifRes: any) => {
-					let notification = notifRes.get() as Notification;
-					notification.onclick = (notif as NotificationToSend).onOpen;
-					notification.onclose = (notif as NotificationToSend).onClose;
-					notification.onshow = (notif as NotificationToSend).onShow;
+					requireInteraction: true,
+					onClick: item.onClick,
+					onClose: item.onClose,
+					onError: item.onError,
+					onShow: item.onShow
 				});
 			});
 			this._notificationStack = [];

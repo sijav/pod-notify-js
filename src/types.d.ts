@@ -58,6 +58,7 @@ declare interface PodNotifyConfig {
 	socketAddress: string;
 	token: string;
 	serverName: string;
+	appId?: string;
 	handlePushNotification?: boolean;
 	wsConnectionWaitTime?: number;
 	connectionCheckTimeout?: number;
@@ -116,9 +117,10 @@ declare interface DeviceUUIDParsed {
 declare interface NotificationToSend {
 	title: string;
 	text: string;
-	onClose: (e) => void;
-	onOpen: (e) => void;
-	onShow: (e) => void;
+	onClose?: (e) => void;
+	onClick?: (e) => void;
+	onError?: (e) => void;
+	onShow?: (e) => void;
 }
 
 export { NotificationType, GenericNotification, Global, NotifyOptions, PushParams, PluginManifest, PushPermission, PodNotifyConfig, ClientUniques, PodEventType, DeviceUUIDParsed, NotificationToSend }
