@@ -7,7 +7,7 @@ declare module 'pod-notify-js' {
 		public clientUniques: ClientUniques;
 		public serviceWorkerSubscription?: PushSubscription | null;
 		public on: (eventName: PodEventType, callback: (params: any, ack?: any) => void) => string | undefined;
-		public off: (eventName: PodEventType, id: number) => string | undefined;
+		public off: (eventName: PodEventType, id: string) => boolean;
 	}
 
 	export interface PodNotifyConfig {
