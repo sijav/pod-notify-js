@@ -182,12 +182,13 @@ export default class PodNotify {
 			this._fireEvent(PodEventTypes.ASYNC_READY, param, ack);
 		});
 		this._async.on(PodEventTypes.MESSAGE, (param: any, ack?: any) => {
+			this._fireEvent(PodEventTypes.MESSAGE, param, ack);
 			try {
 				const content = JSON.parse(param.content);
 				if (content.messageType === 545) {
 					const contentChild = JSON.parse(content.content);
-					this._fireEvent(PodEventTypes.NOTIFICATION, contentChild, ack);
 					if (contentChild.messageId && contentChild.senderId) {
+						this._fireEvent(PodEventTypes.NOTIFICATION, contentChild, ack);
 						if (this.config.handlePushNotification) {
 							this._sendNotif({
 								text: contentChild.text,
@@ -289,7 +290,6 @@ export default class PodNotify {
 					}
 				}
 			} catch (_) { }
-			this._fireEvent(PodEventTypes.MESSAGE, param, ack);
 		});
 		this._async.on(PodEventTypes.STATE_CHANGE, (param: any, ack?: any) => {
 			this._fireEvent(PodEventTypes.STATE_CHANGE, param, ack);

@@ -3976,15 +3976,17 @@ var PodNotify = function PodNotify(config) {
     });
 
     _this._async.on(PodEventTypes.MESSAGE, function (param, ack) {
+      _this._fireEvent(PodEventTypes.MESSAGE, param, ack);
+
       try {
         var content = JSON.parse(param.content);
 
         if (content.messageType === 545) {
           var contentChild = JSON.parse(content.content);
 
-          _this._fireEvent(PodEventTypes.NOTIFICATION, contentChild, ack);
-
           if (contentChild.messageId && contentChild.senderId) {
+            _this._fireEvent(PodEventTypes.NOTIFICATION, contentChild, ack);
+
             if (_this.config.handlePushNotification) {
               _this._sendNotif({
                 text: contentChild.text,
@@ -4088,8 +4090,6 @@ var PodNotify = function PodNotify(config) {
           }
         }
       } catch (_) {}
-
-      _this._fireEvent(PodEventTypes.MESSAGE, param, ack);
     });
 
     _this._async.on(PodEventTypes.STATE_CHANGE, function (param, ack) {
