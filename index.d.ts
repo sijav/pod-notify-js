@@ -44,5 +44,5 @@ declare module 'pod-notify-js' {
 		currentResolution: string;
 	}
 
-	export type PodEventType = "connect" | "disconnect" | "reconnect" | "message" | "asyncReady" | "stateChange" | "error";
+	export type PodEventType = "notification" | "connect" | "disconnect" | "reconnect" | "message" | "asyncReady" | "stateChange" | "error";
 }
