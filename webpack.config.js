@@ -3,11 +3,11 @@ const path = require("path");
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 module.exports = {
+	devtool: 'source-map',
 	entry: {
 		"pod-notify": './src/index.ts',
 		"pod-notify.min":  './src/index.ts'
 	},
-	devtool: 'source-map',
 	module: {
 		rules: [
 			{

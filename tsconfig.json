@@ -21,5 +21,6 @@
 		"sourceMap": true,
 		"outDir": "./bin/"
 	},
-	"include": ["src"]
+	"include": ["src"],
+	"exclude": []
 }

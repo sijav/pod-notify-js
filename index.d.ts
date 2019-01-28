@@ -1,51 +1,46 @@
-declare module 'pod-notify.js' {
+declare module 'pod-notify-js' {
 
-	const defaultNotify: Notify;
-	export default defaultNotify;
-
-	class Notify {
-		Permission: NotifyPermission;
-
-		create(title: string, params?: NotifyNotificationParams): Promise<NotifyNotification>
-
-		close(tag: string): void;
-
-		clear(): void;
-
-		config(params: NotifyParams): void;
+	export default class Notify {
+		public notify: Notify;
+		public config: PodNotifyConfig;
+		public clientUniques: ClientUniques;
+		public serviceWorkerSubscription?: PushSubscription | null;
+		public on = (eventName: PodEventType, callback: (_peerId?: string) => void) => string | undefined;
 	}
 
-	export interface NotifyNotificationParams {
-		body?: string;
-		icon?: string;
-		link?: string;
-		timeout?: number;
-		tag?: string;
-		requireInteraction?: boolean;
-		vibrate?: boolean;
-		silent?: boolean;
-		onClick?: Function;
-		onError?: Function;
-	}
-
-	export interface NotifyParams {
+	export interface PodNotifyConfig {
+		socketAddress: string;
+		token: string;
+		serverName: string;
+		appId?: string;
+		handlePushNotification?: boolean;
+		wsConnectionWaitTime?: number;
+		connectionCheckTimeout?: number;
+		connectionCheckTimeoutThreshold?: number;
+		messageTtl?: number;
+		serverRegisteration?: boolean;
+		connectionRetryInterval?: number;
+		asyncLogging?: {
+			onFunction?: boolean;
+			onMessageReceive?: boolean;
+			onMessageSend?: boolean;
+			workerId?: number;
+		};
 		serviceWorker?: string;
-		fallback?: Function;
 	}
 
-	export interface NotifyPermission {
-		DEFAULT: string;
-		GRANTED: string;
-		DENIED: string;
-
-		request(onGranted?: Function, onDenied?: Function): void;
-
-		has(): boolean;
-
-		get(): string;
+	export interface ClientUniques {
+		deviceId: string;
+		browser: string;
+		browserVersion: string;
+		browserMajorVersion: string;
+		os: string;
+		osVersion: string;
+		deviceName: string;
+		deviceType: string;
+		deviceVendor: string;
+		currentResolution: string;
 	}
 
-	export interface NotifyNotification {
-		close(): void;
-	}
+	export type PodEventType = "connect" | "disconnect" | "reconnect" | "message" | "asyncReady" | "stateChange" | "error";
 }

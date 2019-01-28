@@ -926,7 +926,7 @@ function generateUUID(sectionCount) {
       connectionRetryInterval = params.connectionRetryInterval || 5000,
       socketReconnectRetryInterval,
       socketReconnectCheck,
-      retryStep = 1,
+      retryStep = 4,
       reconnectOnClose = (typeof params.reconnectOnClose === "boolean") ?
       params.reconnectOnClose :
       true,
@@ -990,7 +990,7 @@ function generateUUID(sectionCount) {
           socketReconnectCheck && clearTimeout(socketReconnectCheck);
 
           isSocketOpen = true;
-          retryStep = 1;
+          retryStep = 4;
 
           socketState = socketStateType.OPEN;
           fireEvent("stateChange", {
@@ -1015,6 +1015,7 @@ function generateUUID(sectionCount) {
           oldPeerId = peerId;
 
           socketState = socketStateType.CLOSED;
+
           fireEvent("stateChange", {
             socketState: socketState,
             timeUntilReconnect: 0,
@@ -1043,11 +1044,13 @@ function generateUUID(sectionCount) {
               peerId: peerId
             });
 
+            socketReconnectRetryInterval && clearTimeout(socketReconnectRetryInterval);
+
             socketReconnectRetryInterval = setTimeout(function() {
               socket.connect();
             }, 1000 * retryStep);
 
-            if (retryStep < 60)
+            if (retryStep < 64)
               retryStep *= 2;
 
             socketReconnectCheck && clearTimeout(socketReconnectCheck);
@@ -1099,9 +1102,9 @@ function generateUUID(sectionCount) {
 
         socket.on("error", function(error) {
           fireEvent("error", {
-            errorCode: error.target._closeCode,
-            errorMessage: error.message,
-            errorEvent: error.error
+            errorCode: "",
+            errorMessage: "",
+            errorEvent: error
           });
         });
       },
@@ -1344,7 +1347,6 @@ function generateUUID(sectionCount) {
         registerDeviceTimeoutId && clearTimeout(registerDeviceTimeoutId);
         registerServerTimeoutId && clearTimeout(registerServerTimeoutId);
         checkIfSocketHasOpennedTimeoutId && clearTimeout(checkIfSocketHasOpennedTimeoutId);
-        socketReconnectRetryInterval && clearTimeout(socketReconnectRetryInterval);
         socketReconnectCheck && clearTimeout(socketReconnectCheck);
       },
 
@@ -1485,7 +1487,14 @@ function generateUUID(sectionCount) {
       isDeviceRegister = false;
       isSocketOpen = false;
       clearTimeouts();
-      socket.connect();
+
+      socketReconnectRetryInterval && clearTimeout(socketReconnectRetryInterval);
+      socket.close();
+
+      socketReconnectRetryInterval = setTimeout(function() {
+        retryStep = 4;
+        socket.connect();
+      }, 2000);
     }
 
     init();
@@ -3857,13 +3866,13 @@ var PodNotify = function PodNotify(config) {
 
   _classCallCheck(this, PodNotify);
 
-  _defineProperty(this, "Notify", void 0);
+  _defineProperty(this, "notify", void 0);
 
-  _defineProperty(this, "Config", void 0);
+  _defineProperty(this, "config", void 0);
 
-  _defineProperty(this, "ClientUniques", void 0);
+  _defineProperty(this, "clientUniques", void 0);
 
-  _defineProperty(this, "ServiceWorkerSubscription", void 0);
+  _defineProperty(this, "serviceWorkerSubscription", void 0);
 
   _defineProperty(this, "_eventCallbacks", {
     connect: {},
@@ -3891,8 +3900,20 @@ var PodNotify = function PodNotify(config) {
 
   _defineProperty(this, "_notificationStack", []);
 
+  _defineProperty(this, "on", function (eventName, callback) {
+    if (_this._eventCallbacks[eventName]) {
+      var id = Object(_utility_GenerateUUID__WEBPACK_IMPORTED_MODULE_1__[/* default */ "a"])();
+      _this._eventCallbacks[eventName][id] = callback;
+      return id;
+    }
+
+    if (eventName === PodEventTypes.CONNECT && _this._connected) {
+      callback(_this._peerId);
+    }
+  });
+
   _defineProperty(this, "_asyncInitialize", function () {
-    _this._async = new podasync__WEBPACK_IMPORTED_MODULE_2___default.a(_objectSpread({}, _this.Config, {
+    _this._async = new podasync__WEBPACK_IMPORTED_MODULE_2___default.a(_objectSpread({}, _this.config, {
       appId: _this._appId,
       deviceId: _this._deviceFingerPrint
     }));
@@ -3921,7 +3942,7 @@ var PodNotify = function PodNotify(config) {
       _this._async.send({
         type: 4,
         content: {
-          peerName: _this.Config.serverName,
+          peerName: _this.config.serverName,
           content: JSON.stringify({
             serviceName: "SetStatusPush",
             messageType: 547,
@@ -3931,8 +3952,8 @@ var PodNotify = function PodNotify(config) {
               senderId: null,
               receiverId: _this._peerId,
               appId: _this._appId,
-              deviceId: _this.ClientUniques.deviceId,
-              token: _this.Config.token,
+              deviceId: _this.clientUniques.deviceId,
+              token: _this.config.token,
               sdkType: 'WEB',
               info: _this._uniqueInfoString
             })
@@ -3951,7 +3972,7 @@ var PodNotify = function PodNotify(config) {
           var contentChild = JSON.parse(content.content);
 
           if (contentChild.messageId && contentChild.senderId) {
-            if (_this.Config.handlePushNotification) {
+            if (_this.config.handlePushNotification) {
               _this._sendNotif({
                 text: contentChild.text,
                 title: contentChild.title,
@@ -3969,8 +3990,8 @@ var PodNotify = function PodNotify(config) {
                           senderId: contentChild.senderId,
                           receiverId: _this._peerId,
                           appId: _this._appId,
-                          deviceId: _this.ClientUniques.deviceId,
-                          token: _this.Config.token,
+                          deviceId: _this.clientUniques.deviceId,
+                          token: _this.config.token,
                           sdkType: 'WEB',
                           info: _this._uniqueInfoString
                         })
@@ -4017,8 +4038,8 @@ var PodNotify = function PodNotify(config) {
                           senderId: contentChild.senderId,
                           receiverId: _this._peerId,
                           appId: _this._appId,
-                          deviceId: _this.ClientUniques.deviceId,
-                          token: _this.Config.token,
+                          deviceId: _this.clientUniques.deviceId,
+                          token: _this.config.token,
                           sdkType: 'WEB',
                           info: _this._uniqueInfoString
                         })
@@ -4040,8 +4061,8 @@ var PodNotify = function PodNotify(config) {
                           senderId: contentChild.senderId,
                           receiverId: _this._peerId,
                           appId: _this._appId,
-                          deviceId: _this.ClientUniques.deviceId,
-                          token: _this.Config.token,
+                          deviceId: _this.clientUniques.deviceId,
+                          token: _this.config.token,
                           sdkType: 'WEB',
                           info: _this._uniqueInfoString
                         })
@@ -4068,9 +4089,7 @@ var PodNotify = function PodNotify(config) {
       _this._uniqueInfo.lat = res.data.latitude || null;
       _this._uniqueInfo.lng = res.data.longitude || null;
       _this._uniqueInfoString = JSON.stringify(_this._uniqueInfo);
-    }).catch(function () {
-      _this._getLatLng;
-    });
+    }).catch(_this._getLatLng);
   });
 
   _defineProperty(this, "_fireEvent", function (eventName, param, ack) {
@@ -4098,9 +4117,9 @@ var PodNotify = function PodNotify(config) {
       _this._notificationStack.push(notif);
     }
 
-    if (_this.Notify.Permission.has()) {
+    if (_this.notify.Permission.has()) {
       _this._notificationStack.forEach(function (item) {
-        _this.Notify.create(item.title || '', {
+        _this.notify.create(item.title || '', {
           body: item.text || '',
           title: item.title || '',
           vibrate: [100, 50, 100],
@@ -4117,34 +4136,22 @@ var PodNotify = function PodNotify(config) {
 
       _this._notificationStack = [];
     } else {
-      _this.Notify.Permission.request(function () {
+      _this.notify.Permission.request(function () {
         _this._sendNotif();
       }, function () {});
-    }
-  });
-
-  _defineProperty(this, "on", function (eventName, callback) {
-    if (_this._eventCallbacks[eventName]) {
-      var id = Object(_utility_GenerateUUID__WEBPACK_IMPORTED_MODULE_1__[/* default */ "a"])();
-      _this._eventCallbacks[eventName][id] = callback;
-      return id;
-    }
-
-    if (eventName === PodEventTypes.CONNECT && _this._connected) {
-      callback(_this._peerId);
     }
   });
 
   this._getLatLng(); // @ts-ignore
 
 
-  this.Notify = new _notify__WEBPACK_IMPORTED_MODULE_0__[/* Notify */ "a"](typeof window !== 'undefined' ? window : global);
-  this.Config = config || {
+  this.notify = new _notify__WEBPACK_IMPORTED_MODULE_0__[/* Notify */ "a"](typeof window !== 'undefined' ? window : global);
+  this.config = config || {
     socketAddress: 'ws://172.16.110.235:8003/ws',
     token: '2233',
     serverName: 'mnot'
   };
-  this._appId = this.Config.appId || localStorage.getItem('appId') || new Date().getTime().toString();
+  this._appId = this.config.appId || localStorage.getItem('appId') || new Date().getTime().toString();
   localStorage.setItem('appId', this._appId);
   var deviceUUID = new device_uuid__WEBPACK_IMPORTED_MODULE_4__["DeviceUUID"]();
   var uuid = deviceUUID.get();
@@ -4155,7 +4162,7 @@ var PodNotify = function PodNotify(config) {
   var os = parser.getOS();
   this._deviceFingerPrint = localStorage.getItem('deviceId') || uuid;
   localStorage.setItem('deviceId', this._deviceFingerPrint);
-  this.ClientUniques = {
+  this.clientUniques = {
     browser: browser.name || '',
     browserMajorVersion: browser.major || '',
     browserVersion: browser.version || '',
@@ -4170,16 +4177,16 @@ var PodNotify = function PodNotify(config) {
   this._uniqueInfo = {
     lat: null,
     lng: null,
-    OS: this.ClientUniques.os || '',
-    Brand: this.ClientUniques.deviceVendor || '',
-    Version: this.ClientUniques.osVersion || '',
-    model: this.ClientUniques.deviceName || ''
+    OS: this.clientUniques.os || '',
+    Brand: this.clientUniques.deviceVendor || '',
+    Version: this.clientUniques.osVersion || '',
+    model: this.clientUniques.deviceName || ''
   };
   this._uniqueInfoString = JSON.stringify(this._uniqueInfo);
 
-  if (this.Config.serviceWorker) {
-    this.Notify.config({
-      serviceWorker: this.Config.serviceWorker,
+  if (this.config.serviceWorker) {
+    this.notify.config({
+      serviceWorker: this.config.serviceWorker,
       fallback: function fallback() {} // TODO: Change this fallback to support push on low end browsers
 
     });
@@ -4205,7 +4212,9 @@ var PodNotify = function PodNotify(config) {
 
   function Socket(params) {
 
-    var WebSocket = __webpack_require__(16);
+    if (typeof(WebSocket) === "undefined" && "function" !== "undefined" && typeof(exports) !== "undefined") {
+      WebSocket = __webpack_require__(16);
+    }
 
     /*******************************************************
      *          P R I V A T E   V A R I A B L E S          *
@@ -4215,16 +4224,14 @@ var PodNotify = function PodNotify(config) {
       wsConnectionWaitTime = params.wsConnectionWaitTime || 500,
       connectionCheckTimeout = params.connectionCheckTimeout || 10000,
       eventCallback = {},
-      socket = {},
+      socket,
       waitForSocketToConnectTimeoutId,
-      lastReceivedMessageTime,
-      lastReceivedMessageTimeoutId,
-      lastSentMessageTime,
-      lastSentMessageTimeoutId,
       forceCloseSocket = false,
       forceCloseSocketTimeout,
-      JSTimeLatency = 10,
-      socketRealTimeStatusInterval;
+      socketRealTimeStatusInterval,
+      sendPingTimeout,
+      socketCloseTimeout,
+      forceCloseTimeout;
 
     /*******************************************************
      *            P R I V A T E   M E T H O D S            *
@@ -4236,77 +4243,75 @@ var PodNotify = function PodNotify(config) {
 
       connect = function() {
         try {
-          socket.id = new Date().getTime();
-          socket.socket = new WebSocket(address, []);
+          socket = new WebSocket(address, []);
 
           socketRealTimeStatusInterval && clearInterval(socketRealTimeStatusInterval);
           socketRealTimeStatusInterval = setInterval(function() {
-            switch (socket.socket.readyState) {
+            switch (socket.readyState) {
               case 2:
                 onCloseHandler(null);
+                break;
+              case 3:
+                socketRealTimeStatusInterval && clearInterval(socketRealTimeStatusInterval);
                 break;
             }
           }, 5000);
 
-          socket.socket.onopen = function(event) {
+          socket.onopen = function(event) {
             waitForSocketToConnect(function() {
               eventCallback["open"]();
             });
           }
 
-          socket.socket.onmessage = function(event) {
+          socket.onmessage = function(event) {
+            var messageData = JSON.parse(event.data);
+            eventCallback["message"](messageData);
+
             /**
              * To avoid manually closing socket's connection
              */
             forceCloseSocket = false;
 
-            var messageData = JSON.parse(event.data);
-            eventCallback["message"](messageData);
+            socketCloseTimeout && clearTimeout(socketCloseTimeout);
+            forceCloseTimeout && clearTimeout(forceCloseTimeout);
 
-            lastReceivedMessageTimeoutId && clearTimeout(lastReceivedMessageTimeoutId);
-            forceCloseSocketTimeout && clearTimeout(forceCloseSocketTimeout);
+            socketCloseTimeout = setTimeout(function() {
+              /**
+               * If message's type is not 5, socket won't get any acknowledge packet,therefore
+               * you may think that connection has been closed and you would force socket
+               * to close, but before that you should make sure that connection is actually closed!
+               * for that, you must send a ping message and if that message don't get any
+               * responses too, you are allowed to manually kill socket connection.
+               */
+              ping();
 
-            lastReceivedMessageTime = new Date();
+              /**
+               * We set forceCloseSocket as true so that if your ping's response don't make it
+               * you close your socket
+               */
+              forceCloseSocket = true;
 
-            lastReceivedMessageTimeoutId = setTimeout(function() {
-              var currentDate = new Date();
-              if (currentDate - lastReceivedMessageTime >= connectionCheckTimeout - JSTimeLatency) {
-                /**
-                 * If message's type is not 5, socket won't get any acknowledge packet,therefore
-                 * you may think that connection has been closed and you would force socket
-                 * to close, but before that you should make sure that connection is actually closed!
-                 * for that, you must send a ping message and if that message don't get any
-                 * responses too, you are allowed to manually kill socket connection.
-                 */
-                ping();
+              /**
+               * If type of messages are not 5, you won't get ant ACK packets
+               * for that being said, we send a ping message to be sure of
+               * socket connection's state. The ping message should have an
+               * ACK, if not, you're allowed to close your socket after
+               * 4 * [connectionCheckTimeout] seconds
+               */
+              forceCloseTimeout = setTimeout(function() {
+                if (forceCloseSocket) {
+                  socket.close();
+                }
+              }, connectionCheckTimeout);
 
-                /**
-                 * We set forceCloseSocket as true so that if your ping's response don't make it
-                 * you close your socket
-                 */
-                forceCloseSocket = true;
-
-                /**
-                 * If type of messages are not 5, you won't get ant ACK packets
-                 * for that being said, we send a ping message to be sure of
-                 * socket connection's state. The ping message should have an
-                 * ACK, if not, you're allowed to close your socket after
-                 * 4 * [connectionCheckTimeout] seconds
-                 */
-                forceCloseSocketTimeout = setTimeout(function() {
-                  if (forceCloseSocket) {
-                    socket.socket.close();
-                  }
-                }, 4 * connectionCheckTimeout);
-              }
-            }, connectionCheckTimeout);
+            }, connectionCheckTimeout * 1.5);
           }
 
-          socket.socket.onclose = function(event) {
+          socket.onclose = function(event) {
             onCloseHandler(event);
           }
 
-          socket.socket.onerror = function(event) {
+          socket.onerror = function(event) {
             eventCallback["error"](event);
           }
         } catch (error) {
@@ -4319,8 +4324,9 @@ var PodNotify = function PodNotify(config) {
       },
 
       onCloseHandler = function(event) {
-        lastReceivedMessageTimeoutId && clearTimeout(lastReceivedMessageTimeoutId);
-        lastSentMessageTimeoutId && clearTimeout(lastSentMessageTimeoutId);
+        sendPingTimeout && clearTimeout(sendPingTimeout);
+        socketCloseTimeout && clearTimeout(socketCloseTimeout);
+        forceCloseTimeout && clearTimeout(forceCloseTimeout);
         eventCallback["close"](event);
       },
 
@@ -4333,11 +4339,11 @@ var PodNotify = function PodNotify(config) {
       waitForSocketToConnect = function(callback) {
         waitForSocketToConnectTimeoutId && clearTimeout(waitForSocketToConnectTimeoutId);
 
-        if (socket.socket.readyState === 1) {
+        if (socket.readyState === 1) {
           callback();
         } else {
           waitForSocketToConnectTimeoutId = setTimeout(function() {
-            if (socket.socket.readyState === 1) {
+            if (socket.readyState === 1) {
               callback();
             } else {
               waitForSocketToConnect(callback);
@@ -4355,15 +4361,9 @@ var PodNotify = function PodNotify(config) {
           data.trackerId = params.trackerId;
         }
 
-        lastSentMessageTimeoutId && clearTimeout(lastSentMessageTimeoutId);
-
-        lastSentMessageTime = new Date();
-
-        lastSentMessageTimeoutId = setTimeout(function() {
-          var currentDate = new Date();
-          if (currentDate - lastSentMessageTime >= connectionCheckTimeout - JSTimeLatency) {
-            ping();
-          }
+        sendPingTimeout && clearTimeout(sendPingTimeout);
+        sendPingTimeout = setTimeout(function() {
+          ping();
         }, connectionCheckTimeout);
 
         try {
@@ -4371,8 +4371,8 @@ var PodNotify = function PodNotify(config) {
             data.content = JSON.stringify(params.content);
           }
 
-          if (socket.socket.readyState === 1) {
-            socket.socket.send(JSON.stringify(data));
+          if (socket.readyState === 1) {
+            socket.send(JSON.stringify(data));
           }
         } catch (error) {
           eventCallback["customError"]({
@@ -4398,9 +4398,10 @@ var PodNotify = function PodNotify(config) {
     }
 
     this.close = function() {
-      lastReceivedMessageTimeoutId && clearTimeout(lastReceivedMessageTimeoutId);
-      lastSentMessageTimeoutId && clearTimeout(lastSentMessageTimeoutId);
-      socket.socket.close();
+      sendPingTimeout && clearTimeout(sendPingTimeout);
+      socketCloseTimeout && clearTimeout(socketCloseTimeout);
+      forceCloseTimeout && clearTimeout(forceCloseTimeout);
+      socket.close();
     }
 
     init();

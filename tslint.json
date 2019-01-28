@@ -1,0 +1,25 @@
+{
+	"extends": ["tslint:recommended", "tslint-config-prettier"],
+	"linterOptions": {
+		"exclude": [
+			"bin/*",
+			"node_modules/**/*.ts",
+			".rpt2_cache/**/*"
+		]
+	},
+	"rules": {
+		"array-type": false,
+		"object-literal-sort-keys": false,
+		"ordered-imports": false,
+		"no-debugger": false,
+		"no-console": false,
+		"forin": false,
+		"variable-name": {
+			"options": [
+				"allow-leading-underscore",
+				"allow-pascal-case"
+			]
+		},
+		"no-empty": false
+	}
+}

@@ -27,11 +27,11 @@ const PodEventTypes : {
 }
 
 export default class PodNotify {
-	Notify: Notify;
-	Config: PodNotifyConfig;
-	ClientUniques: ClientUniques;
-	ServiceWorkerSubscription?: PushSubscription | null;
-	_eventCallbacks: {
+	public notify: Notify;
+	public config: PodNotifyConfig;
+	public clientUniques: ClientUniques;
+	public serviceWorkerSubscription?: PushSubscription | null;
+	private _eventCallbacks: {
 		connect: any,
 		disconnect: any,
 		reconnect: any,
@@ -48,12 +48,12 @@ export default class PodNotify {
 		stateChange: {},
 		error: {}
 	};
-	_async: any;
-	_appId: string;
-	_deviceFingerPrint: string;
-	_peerId?: string;
-	_connected: boolean = false;
-	_uniqueInfo: {
+	private _async: any;
+	private _appId: string;
+	private _deviceFingerPrint: string;
+	private _peerId?: string;
+	private _connected: boolean = false;
+	private _uniqueInfo: {
 		lat: number | null;
 		lng: number | null;
 		OS: string;
@@ -61,19 +61,19 @@ export default class PodNotify {
 		Version: string;
 		model: string;
 	};
-	_uniqueInfoString: string;
-	_notificationStack: NotificationToSend[] = [];
+	private _uniqueInfoString: string;
+	private _notificationStack: NotificationToSend[] = [];
 
 	constructor(config?: PodNotifyConfig) {
 		this._getLatLng();
 		// @ts-ignore
-		this.Notify = new Notify(typeof window !== 'undefined' ? window as Global : global as Global);
-		this.Config = config || {
+		this.notify = new Notify(typeof window !== 'undefined' ? window as Global : global as Global);
+		this.config = config || {
 			socketAddress: 'ws://172.16.110.235:8003/ws',
 			token: '2233',
 			serverName: 'mnot'
 		};
-		this._appId = this.Config.appId || localStorage.getItem('appId') || new Date().getTime().toString();
+		this._appId = this.config.appId || localStorage.getItem('appId') || new Date().getTime().toString();
 		localStorage.setItem('appId', this._appId);
 		const deviceUUID = new DeviceUUID();
 		const uuid: string = deviceUUID.get();
@@ -84,7 +84,7 @@ export default class PodNotify {
 		const os = parser.getOS();
 		this._deviceFingerPrint = localStorage.getItem('deviceId') || uuid;
 		localStorage.setItem('deviceId', this._deviceFingerPrint);
-		this.ClientUniques = {
+		this.clientUniques = {
 			browser: browser.name || '',
 			browserMajorVersion: browser.major || '',
 			browserVersion: browser.version || '',
@@ -99,24 +99,35 @@ export default class PodNotify {
 		this._uniqueInfo = {
 			lat: null,
 			lng: null,
-			OS: this.ClientUniques.os || '',
-			Brand: this.ClientUniques.deviceVendor || '',
-			Version: this.ClientUniques.osVersion || '',
-			model: this.ClientUniques.deviceName || ''
+			OS: this.clientUniques.os || '',
+			Brand: this.clientUniques.deviceVendor || '',
+			Version: this.clientUniques.osVersion || '',
+			model: this.clientUniques.deviceName || ''
 		}
 		this._uniqueInfoString = JSON.stringify(this._uniqueInfo);
-		if (this.Config.serviceWorker) {
-			this.Notify.config({
-				serviceWorker: this.Config.serviceWorker,
-				fallback: () => {} // TODO: Change this fallback to support push on low end browsers
+		if (this.config.serviceWorker) {
+			this.notify.config({
+				serviceWorker: this.config.serviceWorker,
+				fallback: () => { } // TODO: Change this fallback to support push on low end browsers
 			});
 		}
 		this._asyncInitialize();
 	}
 
-	_asyncInitialize = () => {
+	public on = (eventName: PodEventType, callback: (_peerId?: string) => void) => {
+		if (this._eventCallbacks[eventName]) {
+			const id = generateUUID();
+			this._eventCallbacks[eventName][id] = callback;
+			return id;
+		}
+		if (eventName === PodEventTypes.CONNECT && this._connected) {
+			callback(this._peerId);
+		}
+	}
+
+	private _asyncInitialize = () => {
 		this._async = new Async({
-			...this.Config,
+			...this.config,
 			appId: this._appId,
 			deviceId: this._deviceFingerPrint
 		});
@@ -138,7 +149,7 @@ export default class PodNotify {
 			this._async.send({
 				type: 4,
 				content: {
-					peerName: this.Config.serverName,
+					peerName: this.config.serverName,
 					content: JSON.stringify({
 						serviceName: "SetStatusPush",
 						messageType: 547,
@@ -148,8 +159,8 @@ export default class PodNotify {
 							senderId: null,
 							receiverId: this._peerId,
 							appId: this._appId,
-							deviceId: this.ClientUniques.deviceId,
-							token: this.Config.token,
+							deviceId: this.clientUniques.deviceId,
+							token: this.config.token,
 							sdkType: 'WEB',
 							info: this._uniqueInfoString
 						})
@@ -164,7 +175,7 @@ export default class PodNotify {
 				if (content.messageType === 545) {
 					const contentChild = JSON.parse(content.content);
 					if (contentChild.messageId && contentChild.senderId) {
-						if (this.Config.handlePushNotification) {
+						if (this.config.handlePushNotification) {
 							this._sendNotif({
 								text: contentChild.text,
 								title: contentChild.title,
@@ -182,8 +193,8 @@ export default class PodNotify {
 													senderId: contentChild.senderId,
 													receiverId: this._peerId,
 													appId: this._appId,
-													deviceId: this.ClientUniques.deviceId,
-													token: this.Config.token,
+													deviceId: this.clientUniques.deviceId,
+													token: this.config.token,
 													sdkType: 'WEB',
 													info: this._uniqueInfoString
 												})
@@ -228,8 +239,8 @@ export default class PodNotify {
 													senderId: contentChild.senderId,
 													receiverId: this._peerId,
 													appId: this._appId,
-													deviceId: this.ClientUniques.deviceId,
-													token: this.Config.token,
+													deviceId: this.clientUniques.deviceId,
+													token: this.config.token,
 													sdkType: 'WEB',
 													info: this._uniqueInfoString
 												})
@@ -251,8 +262,8 @@ export default class PodNotify {
 													senderId: contentChild.senderId,
 													receiverId: this._peerId,
 													appId: this._appId,
-													deviceId: this.ClientUniques.deviceId,
-													token: this.Config.token,
+													deviceId: this.clientUniques.deviceId,
+													token: this.config.token,
 													sdkType: 'WEB',
 													info: this._uniqueInfoString
 												})
@@ -272,7 +283,7 @@ export default class PodNotify {
 		});
 	}
 
-	_getLatLng = () => {
+	private _getLatLng = () => {
 		axios.get('https://geoip-db.com/json/').then((res: {
 			data: {
 				country_code?: string;
@@ -288,17 +299,19 @@ export default class PodNotify {
 			this._uniqueInfo.lat = res.data.latitude || null;
 			this._uniqueInfo.lng = res.data.longitude || null;
 			this._uniqueInfoString = JSON.stringify(this._uniqueInfo);
-		}).catch(() => {this._getLatLng});
+		}).catch(this._getLatLng);
 	}
 
-	_fireEvent = (eventName: PodEventType, param: any, ack?: any) => {
+	private _fireEvent = (eventName: PodEventType, param: any, ack?: any) => {
 		try {
 			if (ack) {
-				for (let id in this._eventCallbacks[eventName])
+				for (const id in this._eventCallbacks[eventName]) {
 					this._eventCallbacks[eventName][id](param, ack);
+				}
 			} else {
-				for (let id in this._eventCallbacks[eventName])
+				for (const id in this._eventCallbacks[eventName]) {
 					this._eventCallbacks[eventName][id](param);
+				}
 			}
 		} catch (e) {
 			this._fireEvent(PodEventTypes.ERROR, {
@@ -309,13 +322,13 @@ export default class PodNotify {
 		}
 	};
 
-	_sendNotif = (notif?: NotificationToSend) => {
+	private _sendNotif = (notif?: NotificationToSend) => {
 		if(notif) {
 			this._notificationStack.push(notif);
 		}
-		if(this.Notify.Permission.has()) {
+		if(this.notify.Permission.has()) {
 			this._notificationStack.forEach((item) => {
-				this.Notify.create(item.title || '', {
+				this.notify.create(item.title || '', {
 					body: item.text || '',
 					title: item.title || '',
 					vibrate: [100, 50, 100],
@@ -331,20 +344,9 @@ export default class PodNotify {
 			});
 			this._notificationStack = [];
 		} else {
-			this.Notify.Permission.request(() => {
+			this.notify.Permission.request(() => {
 				this._sendNotif();
 			}, () => {});
-		}
-	}
-
-	on = (eventName: PodEventType, callback: Function) => {
-		if (this._eventCallbacks[eventName]) {
-			var id = generateUUID();
-			this._eventCallbacks[eventName][id] = callback;
-			return id;
-		}
-		if (eventName === PodEventTypes.CONNECT && this._connected) {
-			callback(this._peerId);
 		}
 	}
 }
