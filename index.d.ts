@@ -1,11 +1,13 @@
 declare module 'pod-notify-js' {
 
 	export default class Notify {
+		public constructor(config?: PodNotifyConfig);
 		public notify: Notify;
 		public config: PodNotifyConfig;
 		public clientUniques: ClientUniques;
 		public serviceWorkerSubscription?: PushSubscription | null;
-		public on = (eventName: PodEventType, callback: (_peerId?: string) => void) => string | undefined;
+		public on: (eventName: PodEventType, callback: (params: any, ack?: any) => void) => string | undefined;
+		public off: (eventName: PodEventType, id: number) => string | undefined;
 	}
 
 	export interface PodNotifyConfig {

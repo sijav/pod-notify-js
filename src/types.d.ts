@@ -88,7 +88,7 @@ declare interface ClientUniques {
 	currentResolution: string;
 }
 
-declare type PodEventType = "connect" | "disconnect" | "reconnect" | "message" | "asyncReady" | "stateChange" | "error";
+declare type PodEventType = "connect" | "disconnect" | "reconnect" | "message" | "asyncReady" | "stateChange" | "error" | "notification";
 
 declare interface DeviceUUIDParsed {
 	language?: string;

@@ -15,7 +15,8 @@ const PodEventTypes : {
 	MESSAGE: "message";
 	ASYNC_READY: "asyncReady";
 	STATE_CHANGE: "stateChange";
-	ERROR: "error"
+	ERROR: "error";
+	NOTIFICATION: "notification";
 } = {
 	CONNECT: "connect",
 	DISCONNECT: "disconnect",
@@ -23,7 +24,8 @@ const PodEventTypes : {
 	MESSAGE: "message",
 	ASYNC_READY: "asyncReady",
 	STATE_CHANGE: "stateChange",
-	ERROR: "error"
+	ERROR: "error",
+	NOTIFICATION: "notification"
 }
 
 export default class PodNotify {
@@ -38,7 +40,8 @@ export default class PodNotify {
 		message: any,
 		asyncReady: any,
 		stateChange: any,
-		error: any
+		error: any,
+		notification: any
 	} = {
 		connect: {},
 		disconnect: {},
@@ -46,7 +49,8 @@ export default class PodNotify {
 		message: {},
 		asyncReady: {},
 		stateChange: {},
-		error: {}
+		error: {},
+		notification: {}
 	};
 	private _async: any;
 	private _appId: string;
@@ -114,7 +118,7 @@ export default class PodNotify {
 		this._asyncInitialize();
 	}
 
-	public on = (eventName: PodEventType, callback: (_peerId?: string) => void) => {
+	public on = (eventName: PodEventType, callback: (param?: string | any, ack?: any) => void) => {
 		if (this._eventCallbacks[eventName]) {
 			const id = generateUUID();
 			this._eventCallbacks[eventName][id] = callback;
@@ -123,6 +127,14 @@ export default class PodNotify {
 		if (eventName === PodEventTypes.CONNECT && this._connected) {
 			callback(this._peerId);
 		}
+	}
+
+	public off = (eventName: PodEventType, id: string) => {
+		if (this._eventCallbacks[eventName] && this._eventCallbacks[eventName][id]) {
+			delete this._eventCallbacks[eventName][id];
+			return true;
+		}
+		return false;
 	}
 
 	private _asyncInitialize = () => {
@@ -174,6 +186,7 @@ export default class PodNotify {
 				const content = JSON.parse(param.content);
 				if (content.messageType === 545) {
 					const contentChild = JSON.parse(content.content);
+					this._fireEvent(PodEventTypes.NOTIFICATION, contentChild, ack);
 					if (contentChild.messageId && contentChild.senderId) {
 						if (this.config.handlePushNotification) {
 							this._sendNotif({

@@ -3858,7 +3858,8 @@ var PodEventTypes = {
   MESSAGE: "message",
   ASYNC_READY: "asyncReady",
   STATE_CHANGE: "stateChange",
-  ERROR: "error"
+  ERROR: "error",
+  NOTIFICATION: "notification"
 };
 
 var PodNotify = function PodNotify(config) {
@@ -3881,7 +3882,8 @@ var PodNotify = function PodNotify(config) {
     message: {},
     asyncReady: {},
     stateChange: {},
-    error: {}
+    error: {},
+    notification: {}
   });
 
   _defineProperty(this, "_async", void 0);
@@ -3910,6 +3912,15 @@ var PodNotify = function PodNotify(config) {
     if (eventName === PodEventTypes.CONNECT && _this._connected) {
       callback(_this._peerId);
     }
+  });
+
+  _defineProperty(this, "off", function (eventName, id) {
+    if (_this._eventCallbacks[eventName] && _this._eventCallbacks[eventName][id]) {
+      delete _this._eventCallbacks[eventName][id];
+      return true;
+    }
+
+    return false;
   });
 
   _defineProperty(this, "_asyncInitialize", function () {
@@ -3970,6 +3981,8 @@ var PodNotify = function PodNotify(config) {
 
         if (content.messageType === 545) {
           var contentChild = JSON.parse(content.content);
+
+          _this._fireEvent(PodEventTypes.NOTIFICATION, contentChild, ack);
 
           if (contentChild.messageId && contentChild.senderId) {
             if (_this.config.handlePushNotification) {
