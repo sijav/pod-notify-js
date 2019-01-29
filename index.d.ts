@@ -12,7 +12,7 @@ declare module 'pod-notify-js' {
 
 	export class Notify {
 		public Permission: PushPermission;
-		constructor(win: Global);
+		constructor(win: Window);
 		create: (title: string, options: NotifyOptions) => Promise<void>;
 		count: () => number;
 		close: (tag: string) => boolean | undefined;
@@ -47,13 +47,6 @@ declare module 'pod-notify-js' {
 		onError?: Function;
 		onShow?: Function;
 		title?: string;
-	}
-
-	export interface Global {
-		Notification?: NotificationType;
-		webkitNotifications?: any;
-		external?: any;
-		navigator?: Navigator;
 	}
 
 	export interface NotificationType {
