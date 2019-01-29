@@ -2682,20 +2682,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 var Permission =
 /*#__PURE__*/
 function () {
-  // Private members
   // Public members
+  // Private members
   function Permission(win) {
     _classCallCheck(this, Permission);
-
-    _defineProperty(this, "_permissions", void 0);
-
-    _defineProperty(this, "_win", void 0);
 
     _defineProperty(this, "GRANTED", void 0);
 
     _defineProperty(this, "DEFAULT", void 0);
 
     _defineProperty(this, "DENIED", void 0);
+
+    _defineProperty(this, "_permissions", void 0);
+
+    _defineProperty(this, "_win", void 0);
 
     this._win = win;
     this.GRANTED = 'granted';
@@ -2704,11 +2704,11 @@ function () {
     this._permissions = [this.GRANTED, this.DEFAULT, this.DENIED];
   }
   /**
-    * Requests permission for desktop notifications
-    * @param {Function} onGranted - Function to execute once permission is granted
-    * @param {Function} onDenied - Function to execute once permission is denied
-    * @return {void, Promise}
-    */
+   * Requests permission for desktop notifications
+   * @param {Function} onGranted - Function to execute once permission is granted
+   * @param {Function} onDenied - Function to execute once permission is denied
+   * @return {void, Promise}
+   */
 
 
   _createClass(Permission, [{
@@ -2718,12 +2718,50 @@ function () {
       ? this._requestWithCallback.apply(this, arguments) : this._requestAsPromise();
     }
     /**
-      * Old permissions implementation deprecated in favor of a promise based one
-      * @deprecated Since V1.0.4
-      * @param {Function} onGranted - Function to execute once permission is granted
-      * @param {Function} onDenied - Function to execute once permission is denied
-      * @return {void}
-      */
+     * Returns whether Notify has been granted permission to run
+     * @return {Boolean}
+     */
+
+  }, {
+    key: "has",
+    value: function has() {
+      return this.get() === this.GRANTED;
+    }
+    /**
+     * Gets the permission level
+     * @return {Permission} The permission level
+     */
+
+  }, {
+    key: "get",
+    value: function get() {
+      var permission;
+      /* Safari 6+, Chrome 23+ */
+
+      if (this._win.Notification && this._win.Notification.permission) {
+        permission = this._win.Notification.permission;
+      } else if (this._win.webkitNotifications && this._win.webkitNotifications.checkPermission) {
+        /* Legacy webkit browsers */
+        permission = this._permissions[this._win.webkitNotifications.checkPermission()];
+      } else if (navigator.mozNotification) {
+        /* Firefox Mobile */
+        permission = this.GRANTED;
+      } else if (this._win.external && this._win.external.msIsSiteMode) {
+        /* IE9+ */
+        permission = this._win.external.msIsSiteMode() ? this.GRANTED : this.DEFAULT;
+      } else {
+        permission = this.GRANTED;
+      }
+
+      return permission;
+    }
+    /**
+     * Old permissions implementation deprecated in favor of a promise based one
+     * @deprecated Since V1.0.4
+     * @param {Function} onGranted - Function to execute once permission is granted
+     * @param {Function} onDenied - Function to execute once permission is denied
+     * @return {void}
+     */
 
   }, {
     key: "_requestWithCallback",
@@ -2735,13 +2773,24 @@ function () {
 
       var resolve = function resolve() {
         var result = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _this._win.Notification.permission;
-        if (resolved) return;
+
+        if (resolved) {
+          return;
+        }
+
         resolved = true;
-        if (typeof result === 'undefined' && _this._win.webkitNotifications) result = _this._win.webkitNotifications.checkPermission();
+
+        if (typeof result === 'undefined' && _this._win.webkitNotifications) {
+          result = _this._win.webkitNotifications.checkPermission();
+        }
 
         if (result === _this.GRANTED || result === 0) {
-          if (onGranted) onGranted();
-        } else if (onDenied) onDenied();
+          if (onGranted) {
+            onGranted();
+          }
+        } else if (onDenied) {
+          onDenied();
+        }
       };
 
       var request;
@@ -2763,7 +2812,9 @@ function () {
         if (request && request.then) {
           /* Chrome 23+ */
           request.then(resolve).catch(function () {
-            if (onDenied) onDenied();
+            if (onDenied) {
+              onDenied();
+            }
           });
         }
       } else if (onGranted) {
@@ -2772,9 +2823,9 @@ function () {
       }
     }
     /**
-      * Requests permission for desktop notifications in a promise based way
-      * @return {Promise}
-      */
+     * Requests permission for desktop notifications in a promise based way
+     * @return {Promise}
+     */
 
   }, {
     key: "_requestAsPromise",
@@ -2800,7 +2851,10 @@ function () {
         var resolved = false;
 
         var resolver = function resolver(result) {
-          if (resolved) return;
+          if (resolved) {
+            return;
+          }
+
           resolved = true;
           isGranted(result) ? resolvePromise() : rejectPromise();
         };
@@ -2825,38 +2879,10 @@ function () {
             /* Chrome 23+ */
             request.then(resolver).catch(rejectPromise);
           }
-        } else resolvePromise();
+        } else {
+          resolvePromise();
+        }
       });
-    }
-    /**
-      * Returns whether Notify has been granted permission to run
-      * @return {Boolean}
-      */
-
-  }, {
-    key: "has",
-    value: function has() {
-      return this.get() === this.GRANTED;
-    }
-    /**
-      * Gets the permission level
-      * @return {Permission} The permission level
-      */
-
-  }, {
-    key: "get",
-    value: function get() {
-      var permission;
-      /* Safari 6+, Chrome 23+ */
-
-      if (this._win.Notification && this._win.Notification.permission) permission = this._win.Notification.permission;else if (this._win.webkitNotifications && this._win.webkitNotifications.checkPermission)
-        /* Legacy webkit browsers */
-        permission = this._permissions[this._win.webkitNotifications.checkPermission()];else if (navigator.mozNotification)
-        /* Firefox Mobile */
-        permission = this.GRANTED;else if (this._win.external && this._win.external.msIsSiteMode)
-        /* IE9+ */
-        permission = this._win.external.msIsSiteMode() ? this.GRANTED : this.DEFAULT;else permission = this.GRANTED;
-      return permission;
     }
   }]);
 
@@ -3090,43 +3116,52 @@ function (_AbstractAgent) {
       var _this = this;
 
       /* Register ServiceWorker */
-      this._win.navigator && this._win.navigator.serviceWorker.register(serviceWorker);
-      this._win.navigator && this._win.navigator.serviceWorker.ready.then(function (registration) {
-        /* Local data the service worker will use */
-        var localData = {
-          id: id,
-          link: options.link,
-          origin: document.location.href,
-          onClick: Util.isFunction(options.onClick) ? _this.getFunctionBody(options.onClick) : '',
-          onClose: Util.isFunction(options.onClose) ? _this.getFunctionBody(options.onClose) : ''
-        };
-        /* Merge the local data with user-provided data */
+      if (this._win.navigator) {
+        this._win.navigator.serviceWorker.register(serviceWorker);
 
-        if (options.data !== undefined && options.data !== null) localData = Object.assign(localData, options.data);
-        /* Show the notification */
+        this._win.navigator.serviceWorker.ready.then(function (registration) {
+          /* Local data the service worker will use */
+          var localData = {
+            id: id,
+            link: options.link,
+            origin: document.location.href,
+            onClick: Util.isFunction(options.onClick) ? _this.getFunctionBody(options.onClick) : '',
+            onClose: Util.isFunction(options.onClose) ? _this.getFunctionBody(options.onClose) : ''
+          };
+          /* Merge the local data with user-provided data */
 
-        registration.showNotification(title, {
-          icon: options.icon,
-          body: options.body,
-          vibrate: options.vibrate,
-          tag: options.tag,
-          data: localData,
-          requireInteraction: options.requireInteraction,
-          silent: options.silent
-        }).then(function () {
-          registration.getNotifications().then(function (notifications) {
-            /* Send an empty message so the ServiceWorker knows who the client is */
-            registration.active && registration.active.postMessage('');
-            /* Trigger callback */
+          if (options.data !== undefined && options.data !== null) {
+            localData = Object.assign(localData, options.data);
+          }
+          /* Show the notification */
 
-            callback(notifications);
+
+          registration.showNotification(title, {
+            icon: options.icon,
+            body: options.body,
+            vibrate: options.vibrate,
+            tag: options.tag,
+            data: localData,
+            requireInteraction: options.requireInteraction,
+            silent: options.silent
+          }).then(function () {
+            registration.getNotifications().then(function (notifications) {
+              /* Send an empty message so the ServiceWorker knows who the client is */
+              if (registration.active) {
+                registration.active.postMessage('');
+              }
+              /* Trigger callback */
+
+
+              callback(notifications);
+            });
+          }).catch(function (error) {
+            throw new Error(Messages.errors.sw_notification_error + error.message);
           });
         }).catch(function (error) {
-          throw new Error(Messages.errors.sw_notification_error + error.message);
+          throw new Error(Messages.errors.sw_registration_error + error.message);
         });
-      }).catch(function (error) {
-        throw new Error(Messages.errors.sw_registration_error + error.message);
-      });
+      }
     }
     /**
      * Close all notification
@@ -3392,10 +3427,12 @@ function Notify_defineProperty(obj, key, value) { if (key in obj) { Object.defin
 var Notify_Notify =
 /*#__PURE__*/
 function () {
-  // Private members
   // Public members
+  // Private members
   function Notify(win) {
     Notify_classCallCheck(this, Notify);
+
+    Notify_defineProperty(this, "Permission", void 0);
 
     Notify_defineProperty(this, "_agents", void 0);
 
@@ -3406,8 +3443,6 @@ function () {
     Notify_defineProperty(this, "_notifications", void 0);
 
     Notify_defineProperty(this, "_win", void 0);
-
-    Notify_defineProperty(this, "Permission", void 0);
 
     /* Private variables */
 
@@ -3433,18 +3468,187 @@ function () {
     };
     this._configuration = {
       serviceWorker: '/serviceWorker.min.js',
-      fallback: function fallback(_) {}
+      fallback: function fallback() {}
     };
   }
   /**
-   * Closes a notification
-   * @param id			ID of notification
-   * @returns {boolean}   denotes whether the operation was successful
-   * @private
+   * Creates and displays a new notification
+   * @param {Array} options
+   * @return {Promise}
    */
 
 
   Notify_createClass(Notify, [{
+    key: "create",
+    value: function create(title, options) {
+      var _this = this;
+
+      var promiseCallback;
+      /* Fail if no or an invalid title is provided */
+
+      if (!Util.isString(title)) {
+        throw new Error(Messages.errors.invalid_title);
+      }
+      /* Request permission if it isn't granted */
+
+
+      if (!this.Permission.has()) {
+        promiseCallback = function promiseCallback(resolve, reject) {
+          var promise = _this.Permission.request();
+
+          if (promise) {
+            promise.then(function () {
+              _this._createCallback(title, options, resolve);
+            }).catch(function () {
+              reject(Messages.errors.permission_denied);
+            });
+          }
+        };
+      } else {
+        promiseCallback = function promiseCallback(resolve, reject) {
+          try {
+            _this._createCallback(title, options, resolve);
+          } catch (e) {
+            reject(e);
+          }
+        };
+      }
+
+      return new Promise(promiseCallback);
+    }
+    /**
+     * Returns the notification count
+     * @return {Integer} The notification count
+     */
+
+  }, {
+    key: "count",
+    value: function count() {
+      var count = 0;
+      var key;
+
+      for (key in this._notifications) {
+        if (this._notifications.hasOwnProperty(key)) {
+          count++;
+        }
+      }
+
+      return count;
+    }
+    /**
+     * Closes a notification with the given tag
+     * @param {String} tag - Tag of the notification to close
+     * @return {Boolean} boolean denoting success
+     */
+
+  }, {
+    key: "close",
+    value: function close(tag) {
+      var key;
+      var notification;
+
+      for (key in this._notifications) {
+        if (this._notifications.hasOwnProperty(key)) {
+          notification = this._notifications[key];
+          /* Run only if the tags match */
+
+          if (notification.tag === tag) {
+            /* Call the notification's close() method */
+            return this._closeNotification(key);
+          }
+        }
+      }
+    }
+    /**
+     * Clears all notifications
+     * @return {Boolean} boolean denoting whether the clear was successful in closing all notifications
+     */
+
+  }, {
+    key: "clear",
+    value: function clear() {
+      var key;
+      var success = true;
+
+      for (key in this._notifications) {
+        if (this._notifications.hasOwnProperty(key)) {
+          success = success && this._closeNotification(key);
+        }
+      }
+
+      return success;
+    }
+    /**
+     * Denotes whether Notify is supported in the current browser
+     * @returns {boolean}
+     */
+
+  }, {
+    key: "supported",
+    value: function supported() {
+      var supported = false;
+
+      for (var agent in this._agents) {
+        if (this._agents.hasOwnProperty(agent)) {
+          supported = supported || this._agents[agent].isSupported();
+        }
+      }
+
+      return supported;
+    }
+    /**
+     * Modifies settings or returns all settings if no parameter passed
+     * @param settings
+     */
+
+  }, {
+    key: "config",
+    value: function config(settings) {
+      if (typeof settings !== 'undefined' || settings !== null && Util.isObject(settings)) {
+        Util.objectMerge(this._configuration, settings);
+      }
+
+      return this._configuration;
+    }
+    /**
+     * Copies the functions from a plugin to the main library
+     * @param plugin
+     */
+
+  }, {
+    key: "extend",
+    value: function extend(manifest) {
+      var plugin;
+      var Plugin;
+      var hasProp = {}.hasOwnProperty;
+
+      if (!hasProp.call(manifest, 'plugin')) {
+        throw new Error(Messages.errors.invalid_plugin);
+      } else {
+        if (hasProp.call(manifest, 'config') && Util.isObject(manifest.config) && manifest.config !== null) {
+          this.config(manifest.config);
+        }
+
+        Plugin = manifest.plugin; // @ts-ignore
+
+        plugin = new Plugin(this.config());
+
+        for (var member in plugin) {
+          if (hasProp.call(plugin, member) && Util.isFunction(plugin[member])) {
+            // @ts-ignore
+            this[member] = plugin[member];
+          }
+        }
+      }
+    }
+    /**
+     * Closes a notification
+     * @param id			ID of notification
+     * @returns {boolean}   denotes whether the operation was successful
+     * @private
+     */
+
+  }, {
     key: "_closeNotification",
     value: function _closeNotification(id) {
       var success = true;
@@ -3454,25 +3658,30 @@ function () {
         success = this._removeNotification(id);
         /* Safari 6+, Firefox 22+, Chrome 22+, Opera 25+ */
 
-        if (this._agents.desktop.isSupported()) this._agents.desktop.close(notification);else if (this._agents.webkit.isSupported())
+        if (this._agents.desktop.isSupported()) {
+          this._agents.desktop.close(notification);
+        } else if (this._agents.webkit.isSupported()) {
           /* Legacy WebKit browsers */
-          this._agents.webkit.close(notification);else if (this._agents.ms.isSupported())
+          this._agents.webkit.close(notification);
+        } else if (this._agents.ms.isSupported()) {
           /* IE9 */
-          this._agents.ms.close();else {
+          this._agents.ms.close();
+        } else {
           success = false;
           throw new Error(Messages.errors.unknown_interface);
         }
+
         return success;
       }
 
       return false;
     }
     /**
-      * Adds a notification to the global dictionary of notifications
-      * @param {Notification} notification
-      * @return {Integer} Dictionary key of the notification
-      * @private
-      */
+     * Adds a notification to the global dictionary of notifications
+     * @param {Notification} notification
+     * @return {Integer} Dictionary key of the notification
+     * @private
+     */
 
   }, {
     key: "_addNotification",
@@ -3483,11 +3692,11 @@ function () {
       return id;
     }
     /**
-      * Removes a notification with the given ID
-      * @param  {Integer} id - Dictionary key/ID of the notification to remove
-      * @return {Boolean} boolean denoting success
-      * @private
-      */
+     * Removes a notification with the given ID
+     * @param  {Integer} id - Dictionary key/ID of the notification to remove
+     * @return {Boolean} boolean denoting success
+     * @private
+     */
 
   }, {
     key: "_removeNotification",
@@ -3503,28 +3712,28 @@ function () {
       return success;
     }
     /**
-      * Creates the wrapper for a given notification
-      *
-      * @param {Integer} id - Dictionary key/ID of the notification
-      * @param {Map} options - Options used to create the notification
-      * @returns {Map} wrapper hashmap object
-      * @private
-      */
+     * Creates the wrapper for a given notification
+     *
+     * @param {Integer} id - Dictionary key/ID of the notification
+     * @param {Map} options - Options used to create the notification
+     * @returns {Map} wrapper hashmap object
+     * @private
+     */
 
   }, {
     key: "_prepareNotification",
     value: function _prepareNotification(id, options) {
-      var _this = this;
+      var _this2 = this;
 
       var wrapper;
       /* Wrapper used to get/close notification later on */
 
       wrapper = {
         get: function get() {
-          return _this._notifications[id];
+          return _this2._notifications[id];
         },
         close: function close() {
-          _this._closeNotification(id);
+          _this2._closeNotification(id);
         }
       };
       /* Autoclose timeout */
@@ -3538,15 +3747,15 @@ function () {
       return wrapper;
     }
     /**
-      * Find the most recent notification from a ServiceWorker and add it to the global array
-      * @param notifications
-      * @private
-      */
+     * Find the most recent notification from a ServiceWorker and add it to the global array
+     * @param notifications
+     * @private
+     */
 
   }, {
     key: "_serviceWorkerCallback",
     value: function _serviceWorkerCallback(notifications, options, resolve) {
-      var _this2 = this;
+      var _this3 = this;
 
       var id = this._addNotification(notifications[notifications.length - 1]);
       /* Listen for close requests from the ServiceWorker */
@@ -3555,7 +3764,10 @@ function () {
       if (navigator && navigator.serviceWorker) {
         navigator.serviceWorker.addEventListener('message', function (event) {
           var data = JSON.parse(event.data);
-          if (data.action === 'close' && Number.isInteger(data.id)) _this2._removeNotification(data.id);
+
+          if (data.action === 'close' && Number.isInteger(data.id)) {
+            _this3._removeNotification(data.id);
+          }
         });
         resolve(this._prepareNotification(id, options));
       }
@@ -3563,15 +3775,15 @@ function () {
       resolve(null);
     }
     /**
-      * Callback function for the 'create' method
-      * @return {void}
-      * @private
-      */
+     * Callback function for the 'create' method
+     * @return {void}
+     * @private
+     */
 
   }, {
     key: "_createCallback",
     value: function _createCallback(title, options, resolve) {
-      var _this3 = this;
+      var _this4 = this;
 
       var notification = null;
       var onClose;
@@ -3582,10 +3794,10 @@ function () {
 
       onClose = function onClose(id, _) {
         /* A bit redundant, but covers the cases when close() isn't explicitly called */
-        _this3._removeNotification(id);
+        _this4._removeNotification(id);
 
         if (Util.isFunction(options.onClose)) {
-          options.onClose.call(_this3, notification);
+          options.onClose.call(_this4, notification);
         }
       };
       /* Safari 6+, Firefox 22+, Chrome 22+, Opera 25+ */
@@ -3600,7 +3812,7 @@ function () {
           var sw = this.config().serviceWorker;
 
           var cb = function cb(notifications) {
-            return _this3._serviceWorkerCallback(notifications, options, resolve);
+            return _this4._serviceWorkerCallback(notifications, options, resolve);
           };
           /* Create a Chrome ServiceWorker notification if it isn't supported */
 
@@ -3611,11 +3823,15 @@ function () {
         }
         /* Legacy WebKit browsers */
 
-      } else if (this._agents.webkit.isSupported()) notification = this._agents.webkit.create(title, options);else if (this._agents.firefox.isSupported())
+      } else if (this._agents.webkit.isSupported()) {
+        notification = this._agents.webkit.create(title, options);
+      } else if (this._agents.firefox.isSupported()) {
         /* Firefox Mobile */
-        this._agents.firefox.create(title, options);else if (this._agents.ms.isSupported())
+        this._agents.firefox.create(title, options);
+      } else if (this._agents.ms.isSupported()) {
         /* IE9 */
-        notification = this._agents.ms.create(title, options);else {
+        notification = this._agents.ms.create(title, options);
+      } else {
         /* Default fallback */
         options.title = title;
         this.config().fallback(options);
@@ -3628,9 +3844,18 @@ function () {
         /* Notification callbacks */
 
 
-        if (Util.isFunction(options.onShow)) notification.addEventListener('show', options.onShow);
-        if (Util.isFunction(options.onError)) notification.addEventListener('error', options.onError);
-        if (Util.isFunction(options.onClick)) notification.addEventListener('click', options.onClick);
+        if (Util.isFunction(options.onShow)) {
+          notification.addEventListener('show', options.onShow);
+        }
+
+        if (Util.isFunction(options.onError)) {
+          notification.addEventListener('error', options.onError);
+        }
+
+        if (Util.isFunction(options.onClick)) {
+          notification.addEventListener('click', options.onClick);
+        }
+
         notification.addEventListener('close', function () {
           onClose(_id);
         });
@@ -3645,163 +3870,6 @@ function () {
 
 
       resolve(null);
-    }
-    /**
-      * Creates and displays a new notification
-      * @param {Array} options
-      * @return {Promise}
-      */
-
-  }, {
-    key: "create",
-    value: function create(title, options) {
-      var _this4 = this;
-
-      var promiseCallback;
-      /* Fail if no or an invalid title is provided */
-
-      if (!Util.isString(title)) {
-        throw new Error(Messages.errors.invalid_title);
-      }
-      /* Request permission if it isn't granted */
-
-
-      if (!this.Permission.has()) {
-        promiseCallback = function promiseCallback(resolve, reject) {
-          var promise = _this4.Permission.request();
-
-          if (promise) {
-            promise.then(function () {
-              _this4._createCallback(title, options, resolve);
-            }).catch(function () {
-              reject(Messages.errors.permission_denied);
-            });
-          }
-        };
-      } else {
-        promiseCallback = function promiseCallback(resolve, reject) {
-          try {
-            _this4._createCallback(title, options, resolve);
-          } catch (e) {
-            reject(e);
-          }
-        };
-      }
-
-      return new Promise(promiseCallback);
-    }
-    /**
-      * Returns the notification count
-      * @return {Integer} The notification count
-      */
-
-  }, {
-    key: "count",
-    value: function count() {
-      var count = 0;
-      var key;
-
-      for (key in this._notifications) {
-        if (this._notifications.hasOwnProperty(key)) count++;
-      }
-
-      return count;
-    }
-    /**
-      * Closes a notification with the given tag
-      * @param {String} tag - Tag of the notification to close
-      * @return {Boolean} boolean denoting success
-      */
-
-  }, {
-    key: "close",
-    value: function close(tag) {
-      var key, notification;
-
-      for (key in this._notifications) {
-        if (this._notifications.hasOwnProperty(key)) {
-          notification = this._notifications[key];
-          /* Run only if the tags match */
-
-          if (notification.tag === tag) {
-            /* Call the notification's close() method */
-            return this._closeNotification(key);
-          }
-        }
-      }
-    }
-    /**
-      * Clears all notifications
-      * @return {Boolean} boolean denoting whether the clear was successful in closing all notifications
-      */
-
-  }, {
-    key: "clear",
-    value: function clear() {
-      var key,
-          success = true;
-
-      for (key in this._notifications) {
-        if (this._notifications.hasOwnProperty(key)) success = success && this._closeNotification(key);
-      }
-
-      return success;
-    }
-    /**
-      * Denotes whether Notify is supported in the current browser
-      * @returns {boolean}
-      */
-
-  }, {
-    key: "supported",
-    value: function supported() {
-      var supported = false;
-
-      for (var agent in this._agents) {
-        if (this._agents.hasOwnProperty(agent)) supported = supported || this._agents[agent].isSupported();
-      }
-
-      return supported;
-    }
-    /**
-      * Modifies settings or returns all settings if no parameter passed
-      * @param settings
-      */
-
-  }, {
-    key: "config",
-    value: function config(settings) {
-      if (typeof settings !== 'undefined' || settings !== null && Util.isObject(settings)) Util.objectMerge(this._configuration, settings);
-      return this._configuration;
-    }
-    /**
-      * Copies the functions from a plugin to the main library
-      * @param plugin
-      */
-
-  }, {
-    key: "extend",
-    value: function extend(manifest) {
-      var plugin,
-          Plugin,
-          hasProp = {}.hasOwnProperty;
-
-      if (!hasProp.call(manifest, 'plugin')) {
-        throw new Error(Messages.errors.invalid_plugin);
-      } else {
-        if (hasProp.call(manifest, 'config') && Util.isObject(manifest.config) && manifest.config !== null) {
-          this.config(manifest.config);
-        }
-
-        Plugin = manifest.plugin; //@ts-ignore
-
-        plugin = new Plugin(this.config());
-
-        for (var member in plugin) {
-          if (hasProp.call(plugin, member) && Util.isFunction(plugin[member])) //@ts-ignore
-            this[member] = plugin[member];
-        }
-      }
     }
   }]);
 
@@ -4164,6 +4232,11 @@ var PodNotify = function PodNotify(config) {
     token: '2233',
     serverName: 'mnot'
   };
+
+  if (this.config.handlePushNotification === undefined) {
+    this.config.handlePushNotification = true;
+  }
+
   this._appId = this.config.appId || localStorage.getItem('appId') || new Date().getTime().toString();
   localStorage.setItem('appId', this._appId);
   var deviceUUID = new device_uuid__WEBPACK_IMPORTED_MODULE_4__["DeviceUUID"]();

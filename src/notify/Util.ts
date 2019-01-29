@@ -1,26 +1,26 @@
 export default class Util {
-	static isUndefined(obj: any) {
+	public static isUndefined(obj: any) {
 		return obj === undefined;
 	}
 
-	static isNull(obj: any) {
+	public static isNull(obj: any) {
 		return obj === null;
 	}
 
-	static isString(obj: any) {
+	public static isString(obj: any) {
 		return typeof obj === 'string';
 	}
 
-	static isFunction(obj: any) {
+	public static isFunction(obj: any) {
 		return obj && {}.toString.call(obj) === '[object Function]';
 	}
 
-	static isObject(obj: any) {
+	public static isObject(obj: any) {
 		return typeof obj === 'object';
 	}
 
-	static objectMerge(target: any, source: any) {
-		for (var key in source) {
+	public static objectMerge(target: any, source: any) {
+		for (const key in source) {
 			if (
 				target.hasOwnProperty(key) &&
 				this.isObject(target[key]) &&

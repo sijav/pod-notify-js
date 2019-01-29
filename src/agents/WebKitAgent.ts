@@ -10,7 +10,7 @@ export default class WebKitAgent extends AbstractAgent {
 	 * Returns a boolean denoting support
 	 * @returns {Boolean} boolean denoting whether webkit notifications are supported
 	 */
-	isSupported() {
+	public isSupported() {
 		return this._win.webkitNotifications !== undefined;
 	}
 
@@ -20,8 +20,8 @@ export default class WebKitAgent extends AbstractAgent {
 	 * @param options - notification options array
 	 * @returns {Notification}
 	 */
-	create(title: string, options: NotifyOptions) {
-		let notification = this._win.webkitNotifications.createNotification(
+	public create(title: string, options: NotifyOptions) {
+		const notification = this._win.webkitNotifications.createNotification(
 			options.icon,
 			title,
 			options.body
@@ -36,7 +36,7 @@ export default class WebKitAgent extends AbstractAgent {
 	 * Close a given notification
 	 * @param notification - notification to close
 	 */
-	close(notification: GenericNotification) {
+	public close(notification: GenericNotification) {
 		notification.cancel();
 	}
 }

@@ -43,15 +43,15 @@ export default class PodNotify {
 		error: any,
 		notification: any
 	} = {
-		connect: {},
-		disconnect: {},
-		reconnect: {},
-		message: {},
-		asyncReady: {},
-		stateChange: {},
-		error: {},
-		notification: {}
-	};
+			connect: {},
+			disconnect: {},
+			reconnect: {},
+			message: {},
+			asyncReady: {},
+			stateChange: {},
+			error: {},
+			notification: {}
+		};
 	private _async: any;
 	private _appId: string;
 	private _deviceFingerPrint: string;
@@ -77,6 +77,9 @@ export default class PodNotify {
 			token: '2233',
 			serverName: 'mnot'
 		};
+		if (this.config.handlePushNotification === undefined) {
+			this.config.handlePushNotification = true;
+		}
 		this._appId = this.config.appId || localStorage.getItem('appId') || new Date().getTime().toString();
 		localStorage.setItem('appId', this._appId);
 		const deviceUUID = new DeviceUUID();
@@ -336,10 +339,10 @@ export default class PodNotify {
 	};
 
 	private _sendNotif = (notif?: NotificationToSend) => {
-		if(notif) {
+		if (notif) {
 			this._notificationStack.push(notif);
 		}
-		if(this.notify.Permission.has()) {
+		if (this.notify.Permission.has()) {
 			this._notificationStack.forEach((item) => {
 				this.notify.create(item.title || '', {
 					body: item.text || '',
@@ -359,7 +362,7 @@ export default class PodNotify {
 		} else {
 			this.notify.Permission.request(() => {
 				this._sendNotif();
-			}, () => {});
+			}, () => { });
 		}
 	}
 }

@@ -11,7 +11,7 @@ export default class MobileFirefoxAgent extends AbstractAgent {
 	 * Returns a boolean denoting support
 	 * @returns {Boolean} boolean denoting whether webkit notifications are supported
 	 */
-	isSupported() {
+	public isSupported() {
 		return this._win.navigator && this._win.navigator.mozNotification !== undefined;
 	}
 
@@ -21,8 +21,8 @@ export default class MobileFirefoxAgent extends AbstractAgent {
 	 * @param options - notification options array
 	 * @returns {Notification}
 	 */
-	create(title: string, options: NotifyOptions) {
-		let notification = this._win.navigator && this._win.navigator.mozNotification.createNotification(
+	public create(title: string, options: NotifyOptions) {
+		const notification = this._win.navigator && this._win.navigator.mozNotification.createNotification(
 			title,
 			options.body,
 			options.icon

@@ -12,7 +12,7 @@ export default class DesktopAgent extends AbstractAgent {
 	 * Returns a boolean denoting support
 	 * @returns {Boolean} boolean denoting whether webkit notifications are supported
 	 */
-	isSupported() {
+	public isSupported() {
 		return this._win.Notification !== undefined;
 	}
 
@@ -22,12 +22,12 @@ export default class DesktopAgent extends AbstractAgent {
 	 * @param options - notification options array
 	 * @returns {Notification}
 	 */
-	create(title: string, options: NotifyOptions) {
+	public create(title: string, options: NotifyOptions) {
 		return new (this._win.Notification as NotificationType)(title, {
 			icon:
 				Util.isString(options.icon) ||
-				Util.isUndefined(options.icon) ||
-				Util.isNull(options.icon)
+					Util.isUndefined(options.icon) ||
+					Util.isNull(options.icon)
 					? options.icon
 					: (options.icon as any).x32,
 			body: options.body,
@@ -40,7 +40,7 @@ export default class DesktopAgent extends AbstractAgent {
 	 * Close a given notification
 	 * @param notification - notification to close
 	 */
-	close(notification: GenericNotification) {
+	public close(notification: GenericNotification) {
 		notification.close();
 	}
 }

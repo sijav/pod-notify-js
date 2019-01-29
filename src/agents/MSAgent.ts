@@ -11,7 +11,7 @@ export default class MSAgent extends AbstractAgent {
 	 * Returns a boolean denoting support
 	 * @returns {Boolean} boolean denoting whether webkit notifications are supported
 	 */
-	isSupported() {
+	public isSupported() {
 		return (
 			this._win.external !== undefined &&
 			this._win.external.msIsSiteMode !== undefined
@@ -24,7 +24,7 @@ export default class MSAgent extends AbstractAgent {
 	 * @param options - notification options array
 	 * @returns {Notification}
 	 */
-	create(title: string, options: NotifyOptions) {
+	public create(title: string, options: NotifyOptions) {
 		/* Clear any previous notifications */
 		this._win.external.msSiteModeClearIconOverlay();
 
@@ -44,7 +44,7 @@ export default class MSAgent extends AbstractAgent {
 	 * Close a given notification
 	 * @param notification - notification to close
 	 */
-	close() {
+	public close() {
 		this._win.external.msSiteModeClearIconOverlay();
 	}
 }
